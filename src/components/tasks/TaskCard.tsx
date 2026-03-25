@@ -53,7 +53,7 @@ export function TaskCard({
   const hasSubtasks = task.subtasks && task.subtasks.length > 0;
   const overdueDays = getOverdueDays(task.due_date);
   const isOverdue = overdueDays > 0 && !['completed', 'closed', 'cancelled'].includes(task.status);
-  const daysOpen = Math.max(0, Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000));
+  const [daysOpen] = useState(() => Math.max(0, Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000)));
 
   return (
     <div style={{ marginLeft: level * 16 }}>
