@@ -94,9 +94,12 @@ export function BillingPage() {
             <h3 className="text-xl font-bold mb-1">Work-Sync Team</h3>
             <p className="text-sm text-muted-foreground mb-5">Full task accountability for your team</p>
 
-            <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-5xl font-extrabold tracking-tight">₹199</span>
-              <span className="text-muted-foreground text-lg">/user/month</span>
+            <div className="mb-6">
+              <div className="flex items-baseline gap-1">
+                <span className="text-5xl font-extrabold tracking-tight">₹199</span>
+                <span className="text-muted-foreground text-lg">/user/month</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Billed quarterly</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

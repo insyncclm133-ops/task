@@ -160,6 +160,7 @@ const plans = [
     name: 'Team',
     price: '₹199',
     priceSuffix: '/user/mo',
+    billingNote: 'Billed quarterly',
     description: 'For teams that need task accountability',
     highlighted: true,
     features: [
@@ -178,6 +179,7 @@ const plans = [
     name: 'Business',
     price: '₹299',
     priceSuffix: '/user/mo',
+    billingNote: 'Billed monthly or quarterly',
     description: 'For organizations needing full control',
     highlighted: false,
     features: [
@@ -552,10 +554,15 @@ export function LandingPage() {
                   <h3 className="text-lg font-bold">{plan.name}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
 
-                  <div className="flex items-baseline gap-1 mt-6 mb-6">
-                    <span className="text-4xl font-extrabold tracking-tight">{plan.price}</span>
-                    {plan.priceSuffix && (
-                      <span className="text-muted-foreground text-lg">{plan.priceSuffix}</span>
+                  <div className="mt-6 mb-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-extrabold tracking-tight">{plan.price}</span>
+                      {plan.priceSuffix && (
+                        <span className="text-muted-foreground text-lg">{plan.priceSuffix}</span>
+                      )}
+                    </div>
+                    {plan.billingNote && (
+                      <p className="text-xs text-muted-foreground mt-1">{plan.billingNote}</p>
                     )}
                   </div>
 
