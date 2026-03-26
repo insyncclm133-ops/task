@@ -4,7 +4,7 @@ import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import {
   Settings, ArrowRight, CheckCircle, Users, Calendar, Flag,
   MessageSquare, BarChart3, Sparkles, Clock, ListTodo, Target,
-  TrendingUp, Zap,
+  TrendingUp, Zap, Check, Crown, Gift,
 } from 'lucide-react';
 
 /* ── Animation variants ─────────────────── */
@@ -142,6 +142,7 @@ export function LandingPage() {
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a>
+            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
           </nav>
           <div className="flex items-center gap-3">
             <Link to="/auth" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -405,6 +406,107 @@ export function LandingPage() {
               <AnimatedCounter target={99} label="Uptime %" />
               <AnimatedCounter target={50} label="Countries" />
             </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ── Pricing ──────────────────────── */}
+      <section id="pricing" className="border-t border-border/50 bg-muted/30">
+        <div className="mx-auto max-w-4xl px-4 py-24 sm:px-6 sm:py-32">
+          <AnimatedSection className="text-center">
+            <motion.div
+              variants={fadeUp}
+              className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary"
+            >
+              <Crown className="h-3.5 w-3.5" />
+              Pricing
+            </motion.div>
+            <motion.h2
+              variants={fadeUp}
+              className="text-3xl sm:text-5xl font-bold tracking-tight"
+            >
+              One Plan.{' '}
+              <span className="text-primary">Everything Included.</span>
+            </motion.h2>
+            <motion.p
+              variants={fadeUp}
+              className="mt-5 text-lg text-muted-foreground max-w-xl mx-auto"
+            >
+              No tiers, no hidden fees. Full access for your entire team.
+            </motion.p>
+          </AnimatedSection>
+
+          <AnimatedSection className="mt-16 flex justify-center">
+            <motion.div
+              variants={fadeUp}
+              whileHover={{ y: -4, scale: 1.01 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="relative w-full max-w-md rounded-3xl border-2 border-primary/30 bg-card p-10 shadow-xl shadow-primary/5"
+            >
+              {/* Popular badge */}
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-1.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Most Popular
+                </span>
+              </div>
+
+              {/* Price */}
+              <div className="text-center pt-4 pb-8 border-b border-border/50">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-extrabold tracking-tight">₹199</span>
+                  <span className="text-muted-foreground text-lg">/user/mo</span>
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Billed monthly. Cancel anytime.
+                </p>
+              </div>
+
+              {/* Welcome credits callout */}
+              <div className="mt-6 flex items-center gap-3 rounded-xl bg-primary/5 border border-primary/10 p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Gift className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">₹100 Welcome Credits</p>
+                  <p className="text-xs text-muted-foreground">Free credits on every new account</p>
+                </div>
+              </div>
+
+              {/* Feature list */}
+              <ul className="mt-8 space-y-4">
+                {[
+                  'Unlimited tasks & projects',
+                  'Team collaboration & assignment',
+                  'Priority & due-date tracking',
+                  'Real-time comments & updates',
+                  'Dashboard analytics & charts',
+                  'Role-based access control',
+                  'User & designation management',
+                  'Dark mode & mobile responsive',
+                ].map((feature) => (
+                  <li key={feature} className="flex items-center gap-3 text-sm">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
+                      <Check className="h-3 w-3 text-primary" />
+                    </div>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              {/* CTA */}
+              <Link
+                to="/auth"
+                className="mt-10 flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:scale-[1.02]"
+              >
+                Start Free Trial
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
+              <p className="mt-4 text-center text-xs text-muted-foreground">
+                No credit card required. 14-day free trial.
+              </p>
+            </motion.div>
           </AnimatedSection>
         </div>
       </section>
