@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Work-Sync — Task Accountability for Indian Teams</title>
+  <meta name="description" content="You gave the task. Do you know if it's done? Hierarchical task accountability with WhatsApp + email alerts at every step — built for how Indian teams actually work." />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: #0f172a; background: #fff; line-height: 1.6; }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; }
+
+    /* ── Layout ── */
+    .container { max-width: 1152px; margin: 0 auto; padding: 0 24px; }
+    .container-sm { max-width: 768px; margin: 0 auto; padding: 0 24px; }
+    .container-md { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+    .text-center { text-align: center; }
+    .border-t { border-top: 1px solid #e2e8f0; }
+    .bg-muted { background: #f8fafc; }
+
+    /* ── Typography ── */
+    .text-muted { color: #64748b; }
+    .text-primary { color: #7c3aed; }
+    .text-red { color: #ef4444; }
+    .text-gradient { background: linear-gradient(90deg, #8b5cf6, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .section-label { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 9999px; font-size: 14px; font-weight: 500; margin-bottom: 16px; }
+    .section-title { font-size: 48px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; }
+    .section-subtitle { font-size: 18px; color: #64748b; margin-top: 20px; max-width: 640px; margin-left: auto; margin-right: auto; }
+
+    /* ── Buttons ── */
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 12px; background: #7c3aed; color: #fff; font-weight: 600; font-size: 16px; border: none; box-shadow: 0 10px 25px rgba(124,58,237,0.25); }
+    .btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 12px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 16px; background: #fff; }
+
+    /* ── Cards ── */
+    .card { border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; background: #fff; }
+
+    /* ── Grids ── */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+
+    /* ── Marquee ── */
+    .marquee-wrap { overflow: hidden; }
+    .marquee-track { display: flex; gap: 24px; animation: marquee 35s linear infinite; width: max-content; }
+    .marquee-track-reverse { display: flex; gap: 24px; animation: marquee-reverse 35s linear infinite; width: max-content; }
+    .logo-box { flex-shrink: 0; width: 128px; height: 56px; border: 1px solid rgba(226,232,240,0.5); border-radius: 12px; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; padding: 8px 16px; filter: grayscale(1); opacity: 0.5; }
+    .logo-box img { max-height: 32px; max-width: 100%; object-fit: contain; }
+    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes marquee-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+    /* ── Steps ── */
+    .step-circle { width: 112px; height: 112px; border-radius: 50%; background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(124,58,237,0.05)); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; position: relative; border: 1px solid rgba(124,58,237,0.2); }
+    .step-num { position: absolute; top: -4px; right: -4px; width: 28px; height: 28px; border-radius: 50%; background: #7c3aed; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(124,58,237,0.25); }
+
+    /* ── Plan Card ── */
+    .plan-card { border-radius: 24px; padding: 32px; background: #fff; }
+    .plan-card.highlighted { border: 2px solid rgba(124,58,237,0.3); box-shadow: 0 20px 40px rgba(124,58,237,0.05); }
+    .plan-card:not(.highlighted) { border: 1px solid #e2e8f0; }
+    .plan-badge { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 6px; padding: 6px 20px; border-radius: 9999px; background: #7c3aed; color: #fff; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(124,58,237,0.25); }
+    .check-list { list-style: none; }
+    .check-list li { display: flex; align-items: center; gap: 12px; font-size: 14px; padding: 6px 0; }
+    .check-icon { width: 20px; height: 20px; border-radius: 50%; background: rgba(124,58,237,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* ── Verticals ── */
+    .vertical-pill { padding: 8px 16px; border-radius: 9999px; border: 1px solid #e2e8f0; font-size: 14px; font-weight: 500; background: #fff; display: inline-block; }
+
+    /* ── Reviews ── */
+    .review-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(124,58,237,0.1); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #7c3aed; font-size: 14px; flex-shrink: 0; }
+
+    /* ── SVG icons ── */
+    .icon { width: 24px; height: 24px; flex-shrink: 0; }
+    .icon-sm { width: 16px; height: 16px; flex-shrink: 0; }
+    .icon-lg { width: 40px; height: 40px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .hide-mobile { display: none !important; }
+      .section-title { font-size: 30px !important; }
+      .hero-title { font-size: 36px !important; }
+      .hero-buttons { flex-direction: column; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .plan-grid { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════ HEADER ════════════════════════════════════════ -->
+<header style="position:sticky;top:0;z-index:50;border-bottom:1px solid #e2e8f0;background:rgba(255,255,255,0.85);backdrop-filter:blur(12px)">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;height:64px">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px">
+      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);display:flex;align-items:center;justify-content:center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      Work-Sync
+    </div>
+    <nav class="hide-mobile" style="display:flex;gap:24px;font-size:14px;color:#64748b">
+      <a href="#problem">Why Work-Sync</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:12px">
+      <a href="#" style="font-size:14px;font-weight:500;color:#64748b">Sign In</a>
+      <a href="#" class="btn-primary" style="padding:8px 16px;font-size:14px;box-shadow:none">Get Started</a>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════ HERO ════════════════════════════════════════ -->
+<section style="padding:112px 24px 96px;text-align:center;position:relative;overflow:hidden">
+  <div style="position:absolute;top:-96px;left:25%;width:500px;height:500px;background:rgba(124,58,237,0.06);border-radius:50%;filter:blur(120px);z-index:-1"></div>
+  <div style="position:absolute;bottom:0;right:25%;width:384px;height:384px;background:rgba(139,92,246,0.04);border-radius:50%;filter:blur(100px);z-index:-1"></div>
+
+  <div style="max-width:896px;margin:0 auto">
+    <div class="section-label" style="background:rgba(124,58,237,0.1);color:#7c3aed">
+      <span style="position:relative;display:flex;width:8px;height:8px"><span style="width:8px;height:8px;border-radius:50%;background:#7c3aed"></span></span>
+      Part of the In-Sync family
+    </div>
+    <br/>
+    <h1 class="hero-title" style="font-size:64px;font-weight:700;letter-spacing:-0.03em;line-height:1.1">
+      You gave the task. <span class="text-gradient">Do you know if it's done?</span>
+    </h1>
+    <p style="margin-top:24px;font-size:20px;color:#64748b;max-width:640px;margin-left:auto;margin-right:auto">
+      Hierarchical task accountability with WhatsApp + email alerts at every step — built for how Indian teams actually work.
+    </p>
+    <div class="hero-buttons" style="margin-top:40px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap">
+      <a href="#" class="btn-primary">Start Free — No Card Needed →</a>
+      <a href="#how-it-works" class="btn-outline">See How It Works</a>
+    </div>
+    <div style="margin-top:56px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:32px;font-size:14px;color:#64748b">
+      <span style="display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        WhatsApp alerts
+      </span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        Email notifications
+      </span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+        Designation hierarchy
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ SOCIAL PROOF ════════════════════════════════════════ -->
+<section class="border-t bg-muted" style="padding:56px 0 64px">
+  <div class="container text-center" style="margin-bottom:40px">
+    <p style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#64748b">Trusted by 100+ businesses across India</p>
+  </div>
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <div class="logo-box"><img src="/logos/quess.png" alt="Quess Corp"/></div>
+      <div class="logo-box"><img src="/logos/motherson.jpg" alt="Motherson"/></div>
+      <div class="logo-box"><img src="/logos/hiranandani.png" alt="Hiranandani"/></div>
+      <div class="logo-box"><img src="/logos/audi.png" alt="Audi"/></div>
+      <div class="logo-box"><img src="/logos/college-dekho.jpg" alt="College Dekho"/></div>
+      <div class="logo-box"><img src="/logos/zolve.webp" alt="Zolve"/></div>
+      <div class="logo-box"><img src="/logos/capital-india.webp" alt="Capital India"/></div>
+      <div class="logo-box"><img src="/logos/ecofy.png" alt="Ecofy"/></div>
+      <div class="logo-box"><img src="/logos/zopper.png" alt="Zopper"/></div>
+      <div class="logo-box"><img src="/logos/alice-blue.png" alt="Alice Blue"/></div>
+      <div class="logo-box"><img src="/logos/ezeepay.png" alt="Ezeepay"/></div>
+      <!-- duplicate for infinite scroll -->
+      <div class="logo-box"><img src="/logos/quess.png" alt="Quess Corp"/></div>
+      <div class="logo-box"><img src="/logos/motherson.jpg" alt="Motherson"/></div>
+      <div class="logo-box"><img src="/logos/hiranandani.png" alt="Hiranandani"/></div>
+      <div class="logo-box"><img src="/logos/audi.png" alt="Audi"/></div>
+      <div class="logo-box"><img src="/logos/college-dekho.jpg" alt="College Dekho"/></div>
+      <div class="logo-box"><img src="/logos/zolve.webp" alt="Zolve"/></div>
+      <div class="logo-box"><img src="/logos/capital-india.webp" alt="Capital India"/></div>
+      <div class="logo-box"><img src="/logos/ecofy.png" alt="Ecofy"/></div>
+      <div class="logo-box"><img src="/logos/zopper.png" alt="Zopper"/></div>
+      <div class="logo-box"><img src="/logos/alice-blue.png" alt="Alice Blue"/></div>
+      <div class="logo-box"><img src="/logos/ezeepay.png" alt="Ezeepay"/></div>
+    </div>
+  </div>
+  <div class="marquee-wrap" style="margin-top:16px">
+    <div class="marquee-track-reverse">
+      <div class="logo-box"><img src="/logos/incred.png" alt="InCred"/></div>
+      <div class="logo-box"><img src="/logos/seeds.png" alt="Seeds"/></div>
+      <div class="logo-box"><img src="/logos/growthvine.png" alt="GrowthVine"/></div>
+      <div class="logo-box"><img src="/logos/uhc.png" alt="UHC"/></div>
+      <div class="logo-box"><img src="/logos/car-trends.webp" alt="Car Trends"/></div>
+      <div class="logo-box"><img src="/logos/legitquest.png" alt="LegitQuest"/></div>
+      <div class="logo-box"><img src="/logos/evco.jpg" alt="EV Co"/></div>
+      <div class="logo-box"><img src="/logos/bluspring.png" alt="BluSpring"/></div>
+      <div class="logo-box"><img src="/logos/cubit.jpeg" alt="Cubit"/></div>
+      <div class="logo-box"><img src="/logos/smb-connect.jpg" alt="SMB Connect"/></div>
+      <div class="logo-box"><img src="/logos/rb.jpg" alt="RB"/></div>
+      <!-- duplicate -->
+      <div class="logo-box"><img src="/logos/incred.png" alt="InCred"/></div>
+      <div class="logo-box"><img src="/logos/seeds.png" alt="Seeds"/></div>
+      <div class="logo-box"><img src="/logos/growthvine.png" alt="GrowthVine"/></div>
+      <div class="logo-box"><img src="/logos/uhc.png" alt="UHC"/></div>
+      <div class="logo-box"><img src="/logos/car-trends.webp" alt="Car Trends"/></div>
+      <div class="logo-box"><img src="/logos/legitquest.png" alt="LegitQuest"/></div>
+      <div class="logo-box"><img src="/logos/evco.jpg" alt="EV Co"/></div>
+      <div class="logo-box"><img src="/logos/bluspring.png" alt="BluSpring"/></div>
+      <div class="logo-box"><img src="/logos/cubit.jpeg" alt="Cubit"/></div>
+      <div class="logo-box"><img src="/logos/smb-connect.jpg" alt="SMB Connect"/></div>
+      <div class="logo-box"><img src="/logos/rb.jpg" alt="RB"/></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ THE PROBLEM ════════════════════════════════════════ -->
+<section id="problem" class="border-t" style="padding:96px 24px">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:80px">
+      <div class="section-label" style="background:rgba(239,68,68,0.1);color:#dc2626">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        The Problem
+      </div>
+      <h2 class="section-title">Tasks given. <span class="text-red">Tasks forgotten.</span></h2>
+      <p class="section-subtitle">In most Indian teams, task assignment happens over calls, WhatsApp, or verbal instructions. There's no system, no tracking, and no accountability.</p>
+    </div>
+    <div class="grid-2">
+      <div class="card" style="border-color:rgba(252,165,165,0.5);background:rgba(254,242,242,0.3)">
+        <div style="width:48px;height:48px;border-radius:12px;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Tasks given, never tracked</h3>
+        <p style="font-size:14px;color:#64748b">Managers assign tasks verbally or over chat. No record. No follow-up.</p>
+      </div>
+      <div class="card" style="border-color:rgba(252,165,165,0.5);background:rgba(254,242,242,0.3)">
+        <div style="width:48px;height:48px;border-radius:12px;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Deadlines missed silently</h3>
+        <p style="font-size:14px;color:#64748b">Due dates pass. Nobody knows until the client complains.</p>
+      </div>
+      <div class="card" style="border-color:rgba(252,165,165,0.5);background:rgba(254,242,242,0.3)">
+        <div style="width:48px;height:48px;border-radius:12px;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">No accountability chain</h3>
+        <p style="font-size:14px;color:#64748b">Who assigned it? Who was supposed to do it? Nobody remembers.</p>
+      </div>
+      <div class="card" style="border-color:rgba(252,165,165,0.5);background:rgba(254,242,242,0.3)">
+        <div style="width:48px;height:48px;border-radius:12px;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Updates lost in WhatsApp</h3>
+        <p style="font-size:14px;color:#64748b">Task status buried in chat groups. Impossible to extract.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ HOW IT WORKS ════════════════════════════════════════ -->
+<section id="how-it-works" class="border-t bg-muted" style="padding:96px 24px">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:80px">
+      <div class="section-label" style="background:rgba(124,58,237,0.1);color:#7c3aed">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        How Work-Sync Works
+      </div>
+      <h2 class="section-title">Assign → Notify → Update → <span class="text-primary">Confirm</span></h2>
+      <p class="section-subtitle">Every task gets tracked from assignment to completion with automatic alerts</p>
+    </div>
+    <div class="grid-4" style="text-align:center">
+      <div>
+        <div class="step-circle">
+          <div class="step-num">1</div>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600">Assign</h3>
+        <p style="font-size:14px;color:#64748b;max-width:240px;margin:8px auto 0">Create a task with deadline, priority, and assignee. Instant WhatsApp + email notification.</p>
+      </div>
+      <div>
+        <div class="step-circle">
+          <div class="step-num">2</div>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600">Notify</h3>
+        <p style="font-size:14px;color:#64748b;max-width:240px;margin:8px auto 0">Assignee gets notified on WhatsApp and email. No more "I didn't know about it".</p>
+      </div>
+      <div>
+        <div class="step-circle">
+          <div class="step-num">3</div>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600">Update</h3>
+        <p style="font-size:14px;color:#64748b;max-width:240px;margin:8px auto 0">Status changes trigger automatic alerts. Everyone stays in the loop.</p>
+      </div>
+      <div>
+        <div class="step-circle">
+          <div class="step-num">4</div>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600">Confirm</h3>
+        <p style="font-size:14px;color:#64748b;max-width:240px;margin:8px auto 0">Assigner signs off on completion quality. "Done" means actually done.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ FEATURES ════════════════════════════════════════ -->
+<section id="features" class="border-t" style="padding:96px 24px">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:80px">
+      <div class="section-label" style="background:rgba(124,58,237,0.1);color:#7c3aed">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+        Features
+      </div>
+      <h2 class="section-title">Built for <span class="text-primary">Indian teams</span></h2>
+      <p class="section-subtitle">WhatsApp-first notifications, designation hierarchies, and the accountability your team needs.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card" style="background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(34,197,94,0.06))">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">WhatsApp Alerts</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">Instant task notifications on WhatsApp at every lifecycle stage — the one weapon Asana cannot match.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(139,92,246,0.06),rgba(124,58,237,0.06))">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Satisfaction Confirmation</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">The task giver signs off on completion quality. "Done" is not done until the assigner confirms. No competitor has this.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(14,165,233,0.06),rgba(59,130,246,0.06))">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Designation Hierarchy</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">MD → VP → Manager → Executive. Built for how Indian organisations are actually structured, not flat western teams.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(249,115,22,0.06))">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Email + WhatsApp Fallback</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">WhatsApp from wallet. Wallet empty? Notifications fall back to email automatically — no disruption, no surprise charges.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(244,63,94,0.06),rgba(236,72,153,0.06))">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">AI Insights</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">Smart analysis of overdue rates, workload imbalance, bottlenecks, and performer rankings.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(6,182,212,0.06),rgba(20,184,166,0.06))">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        </div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Team Analytics</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">Completion rates, stacked workload charts, and performance dashboards by designation level.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ STATS ════════════════════════════════════════ -->
+<section class="border-t bg-muted" style="padding:96px 24px">
+  <div class="container-sm">
+    <div class="grid-4 stats-grid" style="text-align:center">
+      <div>
+        <p style="font-size:36px;font-weight:700">5,000+</p>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">Tasks Tracked</p>
+      </div>
+      <div>
+        <p style="font-size:36px;font-weight:700">200+</p>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">Teams Active</p>
+      </div>
+      <div>
+        <p style="font-size:36px;font-weight:700">99%+</p>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">Uptime</p>
+      </div>
+      <div>
+        <p style="font-size:36px;font-weight:700">50+</p>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">Cities</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ PRICING ════════════════════════════════════════ -->
+<section id="pricing" class="border-t" style="padding:96px 24px">
+  <div class="container-md">
+    <div class="text-center" style="margin-bottom:64px">
+      <div class="section-label" style="background:rgba(124,58,237,0.1);color:#7c3aed">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 .635.487l5.907 1.192a.5.5 0 0 1 .271.843l-4.115 4.348a1 1 0 0 0-.247.72l.68 6.032a.5.5 0 0 1-.712.517l-5.47-2.568a1 1 0 0 0-.84 0l-5.47 2.568a.5.5 0 0 1-.712-.517l.68-6.032a1 1 0 0 0-.247-.72L1.797 11.392a.5.5 0 0 1 .27-.843l5.908-1.192a1 1 0 0 0 .635-.487l2.952-5.604Z"/></svg>
+        Pricing
+      </div>
+      <h2 class="section-title">Simple pricing. <span class="text-primary">14-day free trial.</span></h2>
+      <p class="section-subtitle">No credit card required. All features included. Cancel anytime.</p>
+    </div>
+    <div class="grid-2 plan-grid" style="max-width:720px;margin:0 auto">
+      <!-- Team Plan -->
+      <div class="plan-card highlighted" style="position:relative">
+        <div class="plan-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+          Most Popular
+        </div>
+        <div style="padding-top:16px">
+          <h3 style="font-size:18px;font-weight:700">Team</h3>
+          <p style="font-size:14px;color:#64748b;margin-top:4px">For teams that need task accountability</p>
+          <div style="margin:24px 0;display:flex;align-items:baseline;gap:4px">
+            <span style="font-size:36px;font-weight:800;letter-spacing:-0.025em">₹199</span>
+            <span style="font-size:18px;color:#64748b">/user/mo</span>
+          </div>
+          <ul class="check-list" style="margin-bottom:32px">
+            <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Unlimited users &amp; tasks</li>
+            <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>WhatsApp + email notifications</li>
+            <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Designation hierarchy</li>
+            <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Satisfaction confirmation</li>
+            <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>AI insights &amp; analytics</li>
+            <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Team workload dashboard</li>
+            <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Role-based access control</li>
+            <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Comments &amp; attachments</li>
+          </ul>
+          <a href="#" class="btn-primary" style="width:100%;justify-content:center">Start 14-Day Free Trial →</a>
+        </div>
+      </div>
+      <!-- Business Plan -->
+      <div class="plan-card">
+        <h3 style="font-size:18px;font-weight:700">Business</h3>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">For organizations needing full control</p>
+        <div style="margin:24px 0;display:flex;align-items:baseline;gap:4px">
+          <span style="font-size:36px;font-weight:800;letter-spacing:-0.025em">₹299</span>
+          <span style="font-size:18px;color:#64748b">/user/mo</span>
+        </div>
+        <ul class="check-list" style="margin-bottom:32px">
+          <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Everything in Team</li>
+          <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>API access</li>
+          <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Custom roles &amp; permissions</li>
+          <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Advanced reporting &amp; exports</li>
+          <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Dedicated account manager</li>
+          <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Custom integrations</li>
+          <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>SLA guarantee</li>
+          <li><div class="check-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>Priority support</li>
+        </ul>
+        <a href="#" class="btn-outline" style="width:100%;justify-content:center">Contact Sales →</a>
+      </div>
+    </div>
+    <!-- WhatsApp Wallet Callout -->
+    <div style="max-width:720px;margin:40px auto 0;border:1px solid #a7f3d0;border-radius:16px;background:rgba(236,253,245,0.5);padding:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="width:48px;height:48px;border-radius:12px;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <h4 style="font-size:14px;font-weight:700">WhatsApp Notifications — Pay-per-use</h4>
+        <p style="font-size:12px;color:#64748b;margin-top:4px;line-height:1.7">
+          WhatsApp alerts billed at <strong style="color:#059669">₹0.20/message</strong> from your wallet (min recharge ₹500).
+          Wallet empty? Notifications fall back to email automatically — no disruption, no surprise charges.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ TARGET VERTICALS ════════════════════════════════════════ -->
+<section class="border-t bg-muted" style="padding:64px 24px;text-align:center">
+  <div class="container-sm">
+    <p style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#64748b;margin-bottom:24px">Built for teams in</p>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px">
+      <span class="vertical-pill">NBFCs</span>
+      <span class="vertical-pill">DSA Networks</span>
+      <span class="vertical-pill">Trading Companies</span>
+      <span class="vertical-pill">Logistics Firms</span>
+      <span class="vertical-pill">Professional Services</span>
+      <span class="vertical-pill">Insurance</span>
+      <span class="vertical-pill">Real Estate</span>
+      <span class="vertical-pill">EdTech</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ TESTIMONIAL ════════════════════════════════════════ -->
+<section class="border-t" style="padding:80px 24px;text-align:center">
+  <div class="container-sm">
+    <div style="font-size:48px;margin-bottom:24px;color:#64748b">"</div>
+    <blockquote style="font-size:22px;font-weight:500;line-height:1.6">
+      I finally know what my team is doing. Every task has a trail — who assigned it, when it was done, and whether the quality was accepted.
+    </blockquote>
+    <div style="margin-top:32px">
+      <p style="font-weight:600">Operations Head</p>
+      <p style="font-size:14px;color:#64748b">NBFC with 50+ field agents across 3 states</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ REVIEWS ════════════════════════════════════════ -->
+<section class="border-t bg-muted" style="padding:96px 24px">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:64px">
+      <div class="section-label" style="background:rgba(245,158,11,0.1);color:#d97706">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Reviews
+      </div>
+      <h2 class="section-title">What our users <span class="text-primary">say</span></h2>
+      <p style="margin-top:12px;color:#64748b;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px">
+        <span style="color:#fbbf24">★★★★★</span>
+        4.8 out of 5 from 127+ reviews
+      </p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px;font-size:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"I finally know what my team is doing. Every task has a trail — who assigned it, when it was done, and whether the quality was accepted."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="review-avatar">R</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Rajesh K.</p>
+            <p style="font-size:12px;color:#64748b">Branch Manager, NBFC</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px;font-size:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"The WhatsApp notifications changed everything. My field agents actually respond now because they see it where they already work."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="review-avatar">M</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Meera S.</p>
+            <p style="font-size:12px;color:#64748b">Operations Head, DSA Network</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px;font-size:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"We moved from Excel tracking to Work-Sync in one day. The designation hierarchy matched our org structure perfectly."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="review-avatar">A</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Anil P.</p>
+            <p style="font-size:12px;color:#64748b">VP Operations, Trading Co.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px;font-size:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"The satisfaction confirmation feature is a game-changer. Earlier, tasks were marked 'done' but the quality was never verified."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="review-avatar">P</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Priya D.</p>
+            <p style="font-size:12px;color:#64748b">Team Lead, Logistics</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px;font-size:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"Tried Asana and ClickUp — both built for American startups. Work-Sync understands Indian team dynamics."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="review-avatar">V</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Vikram M.</p>
+            <p style="font-size:12px;color:#64748b">CEO, Professional Services</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px;font-size:16px">★★★★☆</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"My agents across 3 states get WhatsApp alerts the moment a task is assigned. Response time dropped from 2 days to 4 hours."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="review-avatar">S</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Sonal R.</p>
+            <p style="font-size:12px;color:#64748b">Regional Manager, Insurance</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ CTA ════════════════════════════════════════ -->
+<section style="padding:80px 24px">
+  <div style="max-width:896px;margin:0 auto">
+    <div style="position:relative;overflow:hidden;border-radius:24px;background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:64px;text-align:center;color:#fff">
+      <div style="position:absolute;top:-80px;right:-80px;width:240px;height:240px;background:rgba(255,255,255,0.05);border-radius:50%;filter:blur(60px)"></div>
+      <div style="position:absolute;bottom:-80px;left:-80px;width:240px;height:240px;background:rgba(255,255,255,0.05);border-radius:50%;filter:blur(60px)"></div>
+      <div style="position:relative;z-index:1">
+        <h2 style="font-size:36px;font-weight:700;margin-bottom:16px">Stop losing tasks in WhatsApp groups.</h2>
+        <p style="color:rgba(255,255,255,0.8);margin-bottom:40px;max-width:448px;margin-left:auto;margin-right:auto;font-size:18px">
+          Give your team accountability that actually works. 14-day free trial, no card needed.
+        </p>
+        <a href="#" style="display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:12px;background:#fff;color:#7c3aed;font-weight:600;font-size:16px;box-shadow:0 10px 25px rgba(0,0,0,0.15)">
+          Get Started Free →
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ FOOTER ════════════════════════════════════════ -->
+<footer class="border-t" style="padding:32px 24px">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500">
+      <div style="width:20px;height:20px;border-radius:4px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);display:flex;align-items:center;justify-content:center">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      Work-Sync
+    </div>
+    <p style="font-size:14px;color:#64748b">&copy; 2026 In-Sync Solutions. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>
