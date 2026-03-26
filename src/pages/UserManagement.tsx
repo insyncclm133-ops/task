@@ -429,13 +429,14 @@ function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmit
 
           {/* Phone */}
           <div>
-            <label className="text-sm font-medium">Phone</label>
+            <label className="text-sm font-medium">Phone (WhatsApp) *</label>
             <input
               type="tel"
+              required
               value={formData.phone}
               onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
               className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="+1 234 567 890"
+              placeholder="919876543210"
             />
           </div>
 

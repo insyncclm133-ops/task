@@ -59,6 +59,13 @@ Deno.serve(async (req) => {
       case 'create-user': {
         const { email, password, full_name, first_name, last_name, phone, org_id, role, designation_id } = body;
 
+        if (!email || !phone) {
+          return new Response(JSON.stringify({ error: 'Email and phone number are required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
         // Create user in auth.users
         const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
           email,
