@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import {
-  ArrowRight, CheckCircle, Users, Calendar, Flag,
+  ArrowRight, CheckCircle, Users, Flag,
   MessageSquare, BarChart3, Sparkles, Clock, AlertTriangle,
   Bell, Shield, Check, Crown, Phone, Mail, Zap,
 } from 'lucide-react';
@@ -143,68 +143,52 @@ const howItWorks = [
   { step: 1, title: 'Assign', desc: 'Create a task with deadline, priority, and assignee. Instant WhatsApp + email notification.', icon: Flag },
   { step: 2, title: 'Notify', desc: 'Assignee gets notified on WhatsApp and email. No more "I didn\'t know about it".', icon: Bell },
   { step: 3, title: 'Update', desc: 'Status changes trigger automatic alerts. Everyone stays in the loop.', icon: BarChart3 },
-  { step: 4, title: 'Confirm', desc: 'Task completed? Assigner gets notified. Full audit trail. Zero ambiguity.', icon: CheckCircle },
+  { step: 4, title: 'Confirm', desc: 'Assigner signs off on completion quality. "Done" means actually done.', icon: CheckCircle },
 ];
 
 const features = [
-  { icon: Phone, title: 'WhatsApp Alerts', desc: 'Instant task notifications on WhatsApp at every lifecycle stage.', gradient: 'from-emerald-500/10 to-green-500/10' },
-  { icon: Mail, title: 'Email Notifications', desc: 'Professional email alerts for assignments, updates, and completions.', gradient: 'from-sky-500/10 to-blue-500/10' },
-  { icon: Shield, title: 'Designation Hierarchy', desc: 'Define reporting chains. Managers see their team\'s tasks automatically.', gradient: 'from-violet-500/10 to-purple-500/10' },
-  { icon: Sparkles, title: 'AI Insights', desc: 'Smart analysis of overdue rates, workload imbalance, and bottlenecks.', gradient: 'from-amber-500/10 to-orange-500/10' },
-  { icon: Calendar, title: 'Due Date Tracking', desc: 'Never miss a deadline. Overdue tasks flagged automatically.', gradient: 'from-rose-500/10 to-pink-500/10' },
-  { icon: BarChart3, title: 'Team Analytics', desc: 'Completion rates, workload charts, and performance dashboards.', gradient: 'from-cyan-500/10 to-teal-500/10' },
+  { icon: Phone, title: 'WhatsApp Alerts', desc: 'Instant task notifications on WhatsApp at every lifecycle stage — the one weapon Asana cannot match.', gradient: 'from-emerald-500/10 to-green-500/10' },
+  { icon: CheckCircle, title: 'Satisfaction Confirmation', desc: 'The task giver signs off on completion quality. "Done" is not done until the assigner confirms. No competitor has this.', gradient: 'from-violet-500/10 to-purple-500/10' },
+  { icon: Shield, title: 'Designation Hierarchy', desc: 'MD → VP → Manager → Executive. Built for how Indian organisations are actually structured, not flat western teams.', gradient: 'from-sky-500/10 to-blue-500/10' },
+  { icon: Mail, title: 'Email + WhatsApp Fallback', desc: 'WhatsApp from wallet. Wallet empty? Notifications fall back to email automatically — no disruption, no surprise charges.', gradient: 'from-amber-500/10 to-orange-500/10' },
+  { icon: Sparkles, title: 'AI Insights', desc: 'Smart analysis of overdue rates, workload imbalance, bottlenecks, and performer rankings.', gradient: 'from-rose-500/10 to-pink-500/10' },
+  { icon: BarChart3, title: 'Team Analytics', desc: 'Completion rates, stacked workload charts, and performance dashboards by designation level.', gradient: 'from-cyan-500/10 to-teal-500/10' },
 ];
 
 const plans = [
   {
-    name: 'Starter',
-    price: 'Free',
-    priceSuffix: '',
-    description: 'For small teams getting started',
-    highlighted: false,
-    features: [
-      'Up to 5 users',
-      '50 tasks per month',
-      'Email notifications',
-      'Basic dashboard',
-      'Task assignment & tracking',
-      'Comments & attachments',
-    ],
-    cta: 'Start Free',
-  },
-  {
-    name: 'Growth',
+    name: 'Team',
     price: '₹199',
     priceSuffix: '/user/mo',
-    description: 'For growing teams that need accountability',
+    description: 'For teams that need task accountability',
     highlighted: true,
     features: [
-      'Unlimited users',
-      'Unlimited tasks',
-      'WhatsApp + email alerts',
+      'Unlimited users & tasks',
+      'WhatsApp + email notifications',
       'Designation hierarchy',
+      'Satisfaction confirmation',
       'AI insights & analytics',
       'Team workload dashboard',
       'Role-based access control',
-      'Priority support',
+      'Comments & attachments',
     ],
-    cta: 'Start 14-Day Trial',
+    cta: 'Start 14-Day Free Trial',
   },
   {
-    name: 'Enterprise',
+    name: 'Business',
     price: '₹299',
     priceSuffix: '/user/mo',
     description: 'For organizations needing full control',
     highlighted: false,
     features: [
-      'Everything in Growth',
+      'Everything in Team',
       'API access',
       'Custom roles & permissions',
-      'Satisfaction confirmation workflows',
       'Advanced reporting & exports',
-      'Dedicated support',
+      'Dedicated account manager',
       'Custom integrations',
       'SLA guarantee',
+      'Priority support',
     ],
     cta: 'Contact Sales',
   },
@@ -515,7 +499,7 @@ export function LandingPage() {
 
       {/* ── Pricing ────────────────────── */}
       <section id="pricing" className="border-t border-border/50">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
+        <div className="mx-auto max-w-5xl px-4 py-24 sm:px-6 sm:py-32">
           <AnimatedSection className="text-center">
             <motion.div
               variants={fadeUp}
@@ -525,15 +509,15 @@ export function LandingPage() {
               Pricing
             </motion.div>
             <motion.h2 variants={fadeUp} className="text-3xl sm:text-5xl font-bold tracking-tight">
-              Start free.{' '}
-              <span className="text-primary">Scale when ready.</span>
+              Simple pricing.{' '}
+              <span className="text-primary">14-day free trial.</span>
             </motion.h2>
             <motion.p variants={fadeUp} className="mt-5 text-lg text-muted-foreground max-w-xl mx-auto">
-              A genuine free tier to get started. Upgrade when your team outgrows it.
+              No credit card required. All features included. Cancel anytime.
             </motion.p>
           </AnimatedSection>
 
-          <AnimatedSection className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <AnimatedSection className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {plans.map((plan) => (
               <motion.div
                 key={plan.name}
@@ -592,6 +576,61 @@ export function LandingPage() {
               </motion.div>
             ))}
           </AnimatedSection>
+
+          {/* WhatsApp Wallet Callout */}
+          <AnimatedSection className="mt-10 max-w-3xl mx-auto">
+            <motion.div
+              variants={fadeUp}
+              className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 flex-shrink-0">
+                <Phone className="h-6 w-6 text-emerald-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-sm">WhatsApp Notifications — Pay-per-use</h4>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  WhatsApp alerts billed at <span className="font-semibold text-emerald-700">₹0.20/message</span> from your wallet (min recharge ₹500).
+                  Wallet empty? Notifications fall back to email automatically — no disruption, no surprise charges.
+                </p>
+              </div>
+            </motion.div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ── Target Verticals ───────────── */}
+      <section className="border-t border-border/50 bg-muted/30 py-16 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <AnimatedSection>
+            <motion.p variants={fadeUp} className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
+              Built for teams in
+            </motion.p>
+            <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center gap-3">
+              {['NBFCs', 'DSA Networks', 'Trading Companies', 'Logistics Firms', 'Professional Services', 'Insurance', 'Real Estate', 'EdTech'].map((v) => (
+                <span key={v} className="px-4 py-2 rounded-full border bg-background text-sm font-medium hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                  {v}
+                </span>
+              ))}
+            </motion.div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ── Testimonial ───────────────── */}
+      <section className="border-t border-border/50 py-20 px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <AnimatedSection>
+            <motion.div variants={fadeUp}>
+              <div className="text-4xl mb-6">"</div>
+              <blockquote className="text-xl sm:text-2xl font-medium leading-relaxed text-foreground">
+                I finally know what my team is doing. Every task has a trail — who assigned it, when it was done, and whether the quality was accepted.
+              </blockquote>
+              <div className="mt-8">
+                <p className="font-semibold">Operations Head</p>
+                <p className="text-sm text-muted-foreground">NBFC with 50+ field agents across 3 states</p>
+              </div>
+            </motion.div>
+          </AnimatedSection>
         </div>
       </section>
 
@@ -609,7 +648,7 @@ export function LandingPage() {
               <div className="relative z-10">
                 <h2 className="text-3xl sm:text-4xl font-bold mb-4">Stop losing tasks in WhatsApp groups.</h2>
                 <p className="text-white/80 mb-10 max-w-md mx-auto text-lg">
-                  Give your team accountability that actually works. Start free today.
+                  Give your team accountability that actually works. 14-day free trial, no card needed.
                 </p>
                 <Link
                   to="/auth"

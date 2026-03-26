@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import {
-  Wallet, IndianRupee, CreditCard, Sparkles, CheckCircle,
-  Receipt, Crown, Gift,
+  Wallet, IndianRupee, CreditCard, CheckCircle,
+  Receipt, Crown, Phone,
 } from 'lucide-react';
 
 const container = {
@@ -17,17 +17,17 @@ const fadeUp = {
 const planFeatures = [
   'Unlimited tasks & subtasks',
   'WhatsApp + email notifications',
+  'Satisfaction confirmation',
   'Designation hierarchy',
   'AI insights & analytics',
   'Team workload dashboard',
   'Role-based access control',
-  'Priority & deadline tracking',
   'Comments & file attachments',
 ];
 
 const transactions = [
-  { desc: 'Welcome bonus — free credits', amount: '+₹100.00', type: 'credit' as const, date: 'Mar 26, 2026' },
-  { desc: 'Pro Plan — 5 users × ₹199', amount: '-₹995.00', type: 'debit' as const, date: 'Pending' },
+  { desc: 'WhatsApp wallet recharge', amount: '+₹500.00', type: 'credit' as const, date: 'Mar 26, 2026' },
+  { desc: 'Team Plan — 5 users × ₹199', amount: '-₹995.00', type: 'debit' as const, date: 'Pending' },
 ];
 
 export function BillingPage() {
@@ -42,34 +42,37 @@ export function BillingPage() {
             Subscription
           </span>
         </h1>
-        <p className="text-muted-foreground mt-1">Manage your plan, wallet, and payment history</p>
+        <p className="text-muted-foreground mt-1">Manage your plan, WhatsApp wallet, and payment history</p>
       </motion.div>
 
-      {/* Top row: Wallet + Current Plan */}
+      {/* Top row: WhatsApp Wallet + Current Plan */}
       <motion.div variants={fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Wallet Card */}
-        <div className="relative overflow-hidden rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-7">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />
+        {/* WhatsApp Wallet Card */}
+        <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-7">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl" />
           <div className="relative">
             <div className="flex items-center gap-4 mb-5">
-              <div className="h-14 w-14 rounded-2xl bg-primary/15 flex items-center justify-center">
-                <IndianRupee className="h-7 w-7 text-primary" />
+              <div className="h-14 w-14 rounded-2xl bg-emerald-100 flex items-center justify-center">
+                <Phone className="h-7 w-7 text-emerald-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Wallet Balance</p>
-                <p className="text-4xl font-extrabold tracking-tight">₹100.00</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">WhatsApp Wallet</p>
+                <p className="text-4xl font-extrabold tracking-tight">₹500.00</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-primary font-medium mb-5">
-              <Sparkles className="h-4 w-4" />
-              Welcome bonus — ₹100 free credits applied
+            <div className="text-sm text-muted-foreground mb-5">
+              <span className="font-medium text-emerald-700">₹0.20/message</span> &middot; ~2,500 notifications remaining
             </div>
 
+            <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
+              When wallet is empty, notifications automatically fall back to email — no disruption.
+            </p>
+
             <div className="flex flex-wrap gap-3">
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors">
+              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-medium text-sm shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 transition-colors">
                 <CreditCard className="h-4 w-4" />
-                Add Funds
+                Recharge Wallet (min ₹500)
               </button>
               <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-card text-foreground font-medium text-sm hover:bg-muted transition-colors">
                 Auto-recharge Settings
@@ -88,8 +91,8 @@ export function BillingPage() {
           </div>
 
           <div className="pt-4">
-            <h3 className="text-xl font-bold mb-1">Work-Sync Growth</h3>
-            <p className="text-sm text-muted-foreground mb-5">Everything your team needs to stay productive</p>
+            <h3 className="text-xl font-bold mb-1">Work-Sync Team</h3>
+            <p className="text-sm text-muted-foreground mb-5">Full task accountability for your team</p>
 
             <div className="flex items-baseline gap-1 mb-6">
               <span className="text-5xl font-extrabold tracking-tight">₹199</span>
@@ -108,19 +111,20 @@ export function BillingPage() {
         </div>
       </motion.div>
 
-      {/* Welcome Credits Banner */}
+      {/* Subscription Info Banner */}
       <motion.div variants={fadeUp} className="mb-8">
-        <div className="rounded-2xl bg-gradient-to-r from-violet-600 to-purple-700 p-6 text-white flex flex-col sm:flex-row items-start sm:items-center gap-5">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 flex-shrink-0">
-            <Gift className="h-7 w-7" />
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 flex-shrink-0">
+            <IndianRupee className="h-7 w-7 text-primary" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-lg">₹100 Welcome Credits</h3>
-            <p className="text-white/80 text-sm mt-0.5">Every new account receives ₹100 in free credits. Use them towards your first billing cycle.</p>
+            <h3 className="font-bold text-sm">Subscription + WhatsApp Wallet</h3>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Your subscription covers all features including email notifications. WhatsApp notifications are billed separately
+              from your wallet at ₹0.20 per message. Minimum recharge is ₹500. If your wallet runs dry, notifications
+              automatically fall back to email — no disruption, no surprise charges.
+            </p>
           </div>
-          <button className="px-5 py-2.5 rounded-xl bg-white text-purple-700 font-semibold text-sm hover:bg-white/90 transition-colors flex-shrink-0">
-            Learn More
-          </button>
         </div>
       </motion.div>
 
