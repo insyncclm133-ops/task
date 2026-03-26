@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { Layout } from '@/components/Layout';
 import { DashboardPage } from '@/pages/Dashboard';
+import { PlatformDashboard } from '@/pages/PlatformDashboard';
 import { TasksPage } from '@/pages/Tasks';
 import { TaskDetailPage } from '@/pages/TaskDetail';
 import { AuthPage } from '@/pages/Auth';
@@ -24,8 +25,8 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProtectedRoute({ children, requiredAdmin }: { children: React.ReactNode; requiredAdmin?: boolean }) {
-  const { user, isLoading, isInitialized, isAdmin } = useAuth();
+function ProtectedRoute({ children, requiredAdmin, requireOrg }: { children: React.ReactNode; requiredAdmin?: boolean; requireOrg?: boolean }) {
+  const { user, isLoading, isInitialized, isAdmin, isPlatformAdmin } = useAuth();
 
   if (!isInitialized || isLoading) {
     return (
@@ -39,11 +40,23 @@ function ProtectedRoute({ children, requiredAdmin }: { children: React.ReactNode
     return <Navigate to="/auth" replace />;
   }
 
+  // Platform admin cannot access org-level routes
+  if (isPlatformAdmin && (requiredAdmin || requireOrg)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Org admin routes require org admin role
   if (requiredAdmin && !isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 
   return <Layout>{children}</Layout>;
+}
+
+/** Smart dashboard: platform admin sees platform overview, org users see task dashboard */
+function SmartDashboard() {
+  const { isPlatformAdmin } = useAuth();
+  return isPlatformAdmin ? <PlatformDashboard /> : <DashboardPage />;
 }
 
 function AppRoutes() {
@@ -62,12 +75,12 @@ function AppRoutes() {
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
       <Route path="/demo" element={<Demo />} />
-      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
-      <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetailPage /></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><SmartDashboard /></ProtectedRoute>} />
+      <Route path="/tasks" element={<ProtectedRoute requireOrg><TasksPage /></ProtectedRoute>} />
+      <Route path="/tasks/:id" element={<ProtectedRoute requireOrg><TaskDetailPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
-      {/* Admin routes */}
+      {/* Admin routes (org-level) */}
       <Route path="/billing" element={<ProtectedRoute requiredAdmin><BillingPage /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute requiredAdmin><UserManagementPage /></ProtectedRoute>} />
       <Route path="/designations" element={<ProtectedRoute requiredAdmin><DesignationsPage /></ProtectedRoute>} />

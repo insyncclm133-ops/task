@@ -154,7 +154,7 @@ export function UserManagementPage() {
   const isAdminUser =
     profile?.is_platform_admin ||
     userRoles.some(
-      (ur) => ur.user_id === profile?.id && (ur.role === 'super_admin' || ur.role === 'admin'),
+      (ur) => ur.user_id === profile?.id && (ur.role === 'platform_admin' || ur.role === 'admin'),
     );
 
   if (isLoading) {

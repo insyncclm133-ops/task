@@ -4,7 +4,7 @@ import type { User, Session } from '@supabase/supabase-js';
 import type { Profile } from '@/types/task';
 import { supabase } from '@/lib/supabase';
 
-export type AppRole = 'super_admin' | 'admin' | 'sales_manager' | 'sales_agent' | 'support_manager' | 'support_agent' | 'analyst';
+export type AppRole = 'platform_admin' | 'admin' | 'sales_manager' | 'sales_agent' | 'support_manager' | 'support_agent' | 'analyst';
 
 interface DesignationPermission {
   feature_key: string;
@@ -39,9 +39,9 @@ interface AuthContextType {
 
   // Roles & permissions
   userRole: AppRole | null;
+  isPlatformAdmin: boolean;
   isAdmin: boolean;
   isManager: boolean;
-  isSuperAdmin: boolean;
   designationPermissions: DesignationPermission[];
 
   // Loading
@@ -98,19 +98,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setProfile(profileRes.data);
 
-      // Fetch role, org, and permissions in parallel
+      // Fetch role
+      const roleRes = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', currentUser.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      const role = (roleRes.data?.role as AppRole) ?? null;
+      setUserRole(role);
+
+      // Platform admin: skip org/designation fetching (they have no org)
+      if (role === 'platform_admin') {
+        setOrganization(null);
+        setDesignationPermissions([]);
+        return;
+      }
+
+      // Org user: fetch org and permissions in parallel
       const orgId = profileRes.data.org_id;
       const designationId = profileRes.data.designation_id;
 
-      const [roleRes, orgRes, permissionsRes] = await Promise.all([
-        supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', currentUser.id)
-          .eq('is_active', true)
-          .order('created_at', { ascending: true })
-          .limit(1)
-          .maybeSingle(),
+      const [orgRes, permissionsRes] = await Promise.all([
         orgId
           ? supabase
               .from('organizations')
@@ -125,10 +137,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .eq('designation_id', designationId)
           : Promise.resolve({ data: [], error: null }),
       ]);
-
-      if (roleRes.data) {
-        setUserRole(roleRes.data.role as AppRole);
-      }
 
       if (orgRes.data) {
         setOrganization(orgRes.data);
@@ -266,12 +274,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasPermission = useCallback(
     (featureKey: string, permission: 'view' | 'create' | 'edit' | 'delete'): boolean => {
-      // Super admin and admin have all permissions
-      if (userRole === 'super_admin' || userRole === 'admin') return true;
+      if (userRole === 'platform_admin' || userRole === 'admin') return true;
 
       const perm = designationPermissions.find((p) => p.feature_key === featureKey);
-
-      // Default: allow if not restricted
       if (!perm) return true;
 
       const map = {
@@ -293,8 +298,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [hasPermission]
   );
 
-  const isSuperAdmin = userRole === 'super_admin';
-  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+  const isPlatformAdmin = userRole === 'platform_admin';
+  const isAdmin = userRole === 'admin';
   const isManager = isAdmin || userRole === 'sales_manager' || userRole === 'support_manager';
 
   const value: AuthContextType = {
@@ -308,9 +313,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     orgName: organization?.name ?? '',
     orgLogo: organization?.logo_url ?? '',
     userRole,
+    isPlatformAdmin,
     isAdmin,
     isManager,
-    isSuperAdmin,
     designationPermissions,
     isLoading,
     isInitialized,
@@ -345,6 +350,6 @@ export function useOrgId() {
 }
 
 export function useUserRole() {
-  const { userRole, isAdmin, isSuperAdmin, isManager, isLoading } = useAuth();
-  return { userRole, isAdmin, isSuperAdmin, isManager, isLoading };
+  const { userRole, isPlatformAdmin, isAdmin, isManager, isLoading } = useAuth();
+  return { userRole, isPlatformAdmin, isAdmin, isManager, isLoading };
 }

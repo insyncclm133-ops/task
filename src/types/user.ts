@@ -1,4 +1,4 @@
-export type AppRole = 'super_admin' | 'admin' | 'sales_manager' | 'sales_agent' | 'support_manager' | 'support_agent' | 'analyst';
+export type AppRole = 'platform_admin' | 'admin' | 'sales_manager' | 'sales_agent' | 'support_manager' | 'support_agent' | 'analyst';
 
 export interface Organization {
   id: string;
@@ -79,7 +79,7 @@ export interface FeaturePermission {
 }
 
 export const APP_ROLES: { value: AppRole; label: string }[] = [
-  { value: 'super_admin', label: 'Super Admin' },
+  { value: 'platform_admin', label: 'Platform Admin' },
   { value: 'admin', label: 'Admin' },
   { value: 'sales_manager', label: 'Sales Manager' },
   { value: 'sales_agent', label: 'Sales Agent' },
@@ -90,7 +90,7 @@ export const APP_ROLES: { value: AppRole; label: string }[] = [
 
 export function getRoleBadgeColor(role: string): string {
   const colors: Record<string, string> = {
-    super_admin: 'bg-purple-100 text-purple-800 border-purple-200',
+    platform_admin: 'bg-violet-100 text-violet-800 border-violet-200',
     admin: 'bg-red-100 text-red-800 border-red-200',
     sales_manager: 'bg-blue-100 text-blue-800 border-blue-200',
     sales_agent: 'bg-green-100 text-green-800 border-green-200',

@@ -24,26 +24,32 @@ export function Layout({ children }: LayoutProps) {
     if (isMobile) setSidebarOpen(false);
   }, [location.pathname, isMobile]);
 
-  const navItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/tasks', icon: ListTodo, label: 'Tasks' },
-  ];
+  const { isPlatformAdmin } = useAuth();
 
-  const adminNavItems = isAdmin
-    ? [
-        { to: '/users', icon: Users, label: 'Users' },
-        { to: '/designations', icon: Briefcase, label: 'Designations' },
-        { to: '/access-management', icon: Shield, label: 'Access' },
-        { to: '/billing', icon: Wallet, label: 'Billing' },
-      ]
-    : [];
+  const navItems = isPlatformAdmin
+    ? [{ to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' }]
+    : [
+        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/tasks', icon: ListTodo, label: 'Tasks' },
+      ];
+
+  const adminNavItems = isPlatformAdmin
+    ? []
+    : isAdmin
+      ? [
+          { to: '/users', icon: Users, label: 'Users' },
+          { to: '/designations', icon: Briefcase, label: 'Designations' },
+          { to: '/access-management', icon: Shield, label: 'Access' },
+          { to: '/billing', icon: Wallet, label: 'Billing' },
+        ]
+      : [];
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Brand */}
       <div className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-border">
         <Settings className="h-5 w-5 text-sidebar-primary" />
-        <span className="font-bold text-sm text-white truncate">{orgName || 'TaskManager'}</span>
+        <span className="font-bold text-sm text-white truncate">{isPlatformAdmin ? 'Task Platform' : (orgName || 'TaskManager')}</span>
       </div>
 
       {/* Navigation */}
