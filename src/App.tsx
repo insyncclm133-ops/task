@@ -11,6 +11,7 @@ import { LandingPage } from '@/pages/Landing';
 import { UserManagementPage } from '@/pages/UserManagement';
 import { DesignationsPage } from '@/pages/Designations';
 import { AccessManagementPage } from '@/pages/AccessManagement';
+import Demo from '@/pages/Demo';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +59,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+      <Route path="/demo" element={<Demo />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
       <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetailPage /></ProtectedRoute>} />

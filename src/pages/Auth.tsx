@@ -34,11 +34,11 @@ export function AuthPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Illustration */}
-      <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-gradient-to-br from-green-900 via-emerald-800 to-green-700">
+      <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-gradient-to-br from-purple-900 via-violet-800 to-purple-700">
         {/* Color washes */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-green-400/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-violet-400/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-400/10 rounded-full blur-3xl" />
 
         {/* Grid texture */}
         <div
@@ -60,7 +60,7 @@ export function AuthPage() {
           >
             {[
               { title: 'Design Review', status: 'In Progress', color: 'bg-blue-400' },
-              { title: 'Client Proposal', status: 'Completed', color: 'bg-emerald-400' },
+              { title: 'Client Proposal', status: 'Completed', color: 'bg-violet-400' },
               { title: 'Sprint Planning', status: 'Pending', color: 'bg-amber-400' },
             ].map((task, i) => (
               <motion.div

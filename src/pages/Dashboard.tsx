@@ -78,7 +78,7 @@ export function DashboardPage() {
       <motion.div variants={fadeUp} className="mb-8">
         <h1 className="text-3xl font-bold">
           Task{' '}
-          <span className="bg-gradient-to-r from-emerald-500 to-green-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">
             Command Center
           </span>
         </h1>
@@ -174,8 +174,8 @@ export function DashboardPage() {
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="created" stroke="#22c55e" strokeWidth={2} name="Created" />
-              <Line type="monotone" dataKey="completed" stroke="#16a34a" strokeWidth={2} name="Completed" />
+              <Line type="monotone" dataKey="created" stroke="#8b5cf6" strokeWidth={2} name="Created" />
+              <Line type="monotone" dataKey="completed" stroke="#a855f7" strokeWidth={2} name="Completed" />
             </LineChart>
           </ResponsiveContainer>
         ) : (
@@ -197,7 +197,7 @@ export function DashboardPage() {
               <XAxis type="number" tick={{ fontSize: 12 }} />
               <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={120} />
               <Tooltip />
-              <Bar dataKey="tasks" fill="#22c55e" name="Open Tasks" />
+              <Bar dataKey="tasks" fill="#8b5cf6" name="Open Tasks" />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
