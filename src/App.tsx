@@ -64,9 +64,9 @@ function AppRoutes() {
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
       <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetailPage /></ProtectedRoute>} />
-      <Route path="/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
 
       {/* Admin routes */}
+      <Route path="/billing" element={<ProtectedRoute requiredAdmin><BillingPage /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute requiredAdmin><UserManagementPage /></ProtectedRoute>} />
       <Route path="/designations" element={<ProtectedRoute requiredAdmin><DesignationsPage /></ProtectedRoute>} />
       <Route path="/access-management" element={<ProtectedRoute requiredAdmin><AccessManagementPage /></ProtectedRoute>} />

@@ -27,7 +27,6 @@ export function Layout({ children }: LayoutProps) {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/tasks', icon: ListTodo, label: 'Tasks' },
-    { to: '/billing', icon: Wallet, label: 'Billing' },
   ];
 
   const adminNavItems = isAdmin
@@ -35,6 +34,7 @@ export function Layout({ children }: LayoutProps) {
         { to: '/users', icon: Users, label: 'Users' },
         { to: '/designations', icon: Briefcase, label: 'Designations' },
         { to: '/access-management', icon: Shield, label: 'Access' },
+        { to: '/billing', icon: Wallet, label: 'Billing' },
       ]
     : [];
 

@@ -165,6 +165,23 @@ export interface RestartTaskInput {
   restart_reason: string;
 }
 
+export interface AIInsight {
+  type: 'critical' | 'warning' | 'success' | 'info';
+  title: string;
+  description: string;
+}
+
+export interface UserCompletionStat {
+  userId: string;
+  userName: string;
+  total: number;
+  completed: number;
+  inProgress: number;
+  pending: number;
+  overdue: number;
+  completionRate: number;
+}
+
 export interface TaskStats {
   myOpenTasks: number;
   overdueTasks: number;
@@ -174,4 +191,6 @@ export interface TaskStats {
   priorityDistribution: { name: string; value: number }[];
   weeklyTrend: { week: string; created: number; completed: number }[];
   teamWorkload: { name: string; tasks: number }[];
+  userCompletionStats: UserCompletionStat[];
+  aiInsights: AIInsight[];
 }
