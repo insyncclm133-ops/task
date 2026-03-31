@@ -10,17 +10,25 @@ export function AuthPage() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
       if (isSignUp) {
-        await signUp(email, password, fullName);
+        const result = await signUp(email, password, fullName);
+        if (result.needsConfirmation) {
+          setSuccess('Account created! Check your email to confirm, then sign in.');
+          setIsSignUp(false);
+          setPassword('');
+          return;
+        }
       } else {
         await signIn(email, password);
       }
@@ -184,6 +192,12 @@ export function AuthPage() {
               {error && (
                 <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                   {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm">
+                  {success}
                 </div>
               )}
 

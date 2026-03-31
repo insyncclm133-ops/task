@@ -9,6 +9,7 @@ import { TasksPage } from '@/pages/Tasks';
 import { TaskDetailPage } from '@/pages/TaskDetail';
 import { AuthPage } from '@/pages/Auth';
 import { LandingPage } from '@/pages/Landing';
+import { OnboardingPage } from '@/pages/Onboarding';
 import { UserManagementPage } from '@/pages/UserManagement';
 import { DesignationsPage } from '@/pages/Designations';
 import { AccessManagementPage } from '@/pages/AccessManagement';
@@ -25,19 +26,23 @@ const queryClient = new QueryClient({
   },
 });
 
+function LoadingSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+    </div>
+  );
+}
+
 function ProtectedRoute({ children, requiredAdmin, requireOrg }: { children: React.ReactNode; requiredAdmin?: boolean; requireOrg?: boolean }) {
-  const { user, isLoading, isInitialized, isAdmin, isPlatformAdmin } = useAuth();
+  const { user, isLoading, isInitialized, isAdmin, isPlatformAdmin, profile } = useAuth();
 
-  if (!isInitialized || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  if (!isInitialized || isLoading) return <LoadingSpinner />;
+  if (!user) return <Navigate to="/auth" replace />;
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
+  // New user without org needs onboarding (platform admins are exempt)
+  if (profile && !profile.org_id && !isPlatformAdmin) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   // Platform admin cannot access org-level routes
@@ -53,6 +58,21 @@ function ProtectedRoute({ children, requiredAdmin, requireOrg }: { children: Rea
   return <Layout>{children}</Layout>;
 }
 
+/** Onboarding route: requires auth, but NOT org. Redirects away if already onboarded. */
+function OnboardingRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading, isInitialized, profile, isPlatformAdmin } = useAuth();
+
+  if (!isInitialized || isLoading) return <LoadingSpinner />;
+  if (!user) return <Navigate to="/auth" replace />;
+
+  // Already has org or is platform admin — skip onboarding
+  if (profile?.org_id || isPlatformAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 /** Smart dashboard: platform admin sees platform overview, org users see task dashboard */
 function SmartDashboard() {
   const { isPlatformAdmin } = useAuth();
@@ -62,19 +82,14 @@ function SmartDashboard() {
 function AppRoutes() {
   const { user, isLoading, isInitialized } = useAuth();
 
-  if (!isInitialized || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  if (!isInitialized || isLoading) return <LoadingSpinner />;
 
   return (
     <Routes>
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
       <Route path="/demo" element={<Demo />} />
+      <Route path="/onboarding" element={<OnboardingRoute><OnboardingPage /></OnboardingRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><SmartDashboard /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute requireOrg><TasksPage /></ProtectedRoute>} />
       <Route path="/tasks/:id" element={<ProtectedRoute requireOrg><TaskDetailPage /></ProtectedRoute>} />
