@@ -233,7 +233,7 @@ export function LandingPage() {
               Sign In
             </Link>
             <Link
-              to="/auth"
+              to="/register"
               className="text-sm font-medium px-4 py-2 rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors"
             >
               Get Started
@@ -302,7 +302,7 @@ export function LandingPage() {
             className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link
-              to="/auth"
+              to="/register"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:scale-105"
             >
               Start Free — No Card Needed
@@ -578,7 +578,7 @@ export function LandingPage() {
                   </ul>
 
                   <Link
-                    to="/auth"
+                    to="/register"
                     className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] ${
                       plan.highlighted
                         ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90'
@@ -723,7 +723,7 @@ export function LandingPage() {
                   Give your team accountability that actually works. 14-day free trial, no card needed.
                 </p>
                 <Link
-                  to="/auth"
+                  to="/register"
                   className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-purple-700 font-semibold hover:bg-white/90 transition-all hover:scale-105 shadow-lg"
                 >
                   Get Started Free

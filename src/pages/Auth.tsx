@@ -1,37 +1,25 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Settings } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
 export function AuthPage() {
-  const { signIn, signUp } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        const result = await signUp(email, password, fullName);
-        if (result.needsConfirmation) {
-          setSuccess('Account created! Check your email to confirm, then sign in.');
-          setIsSignUp(false);
-          setPassword('');
-          return;
-        }
-      } else {
-        await signIn(email, password);
-      }
+      await signIn(email, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -115,7 +103,7 @@ export function AuthPage() {
         </div>
       </div>
 
-      {/* Right Panel - Form */}
+      {/* Right Panel - Login Form */}
       <div className="flex-1 flex items-center justify-center bg-background px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -131,30 +119,14 @@ export function AuthPage() {
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold">
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
-            </h1>
+            <h1 className="text-2xl font-bold">Welcome Back</h1>
             <p className="text-muted-foreground mt-2 text-sm">
-              {isSignUp ? 'Start managing your tasks today' : 'Sign in to your workspace'}
+              Sign in to your workspace
             </p>
           </div>
 
           <div className="rounded-2xl border bg-card p-8 shadow-xl">
             <form onSubmit={handleSubmit} className="space-y-4">
-              {isSignUp && (
-                <div>
-                  <label className="text-sm font-medium">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="mt-1 w-full h-11 px-3 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                    placeholder="John Doe"
-                  />
-                </div>
-              )}
-
               <div>
                 <label className="text-sm font-medium">Email</label>
                 <input
@@ -177,7 +149,7 @@ export function AuthPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full h-11 px-3 pr-10 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                    placeholder="Min 6 characters"
+                    placeholder="Enter your password"
                   />
                   <button
                     type="button"
@@ -195,30 +167,24 @@ export function AuthPage() {
                 </div>
               )}
 
-              {success && (
-                <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm">
-                  {success}
-                </div>
-              )}
-
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full h-11 text-sm font-medium rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
-                {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+                {loading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 
             <div className="mt-6 text-center text-sm">
               <span className="text-muted-foreground">
-                {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+                Don't have an account?
               </span>{' '}
               <button
-                onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+                onClick={() => navigate('/register')}
                 className="text-primary hover:underline font-medium"
               >
-                {isSignUp ? 'Sign In' : 'Sign Up'}
+                Register
               </button>
             </div>
           </div>

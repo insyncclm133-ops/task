@@ -35,15 +35,10 @@ function LoadingSpinner() {
 }
 
 function ProtectedRoute({ children, requiredAdmin, requireOrg }: { children: React.ReactNode; requiredAdmin?: boolean; requireOrg?: boolean }) {
-  const { user, isLoading, isInitialized, isAdmin, isPlatformAdmin, profile } = useAuth();
+  const { user, isLoading, isInitialized, isAdmin, isPlatformAdmin } = useAuth();
 
   if (!isInitialized || isLoading) return <LoadingSpinner />;
   if (!user) return <Navigate to="/auth" replace />;
-
-  // New user without org needs onboarding (platform admins are exempt)
-  if (profile && !profile.org_id && !isPlatformAdmin) {
-    return <Navigate to="/onboarding" replace />;
-  }
 
   // Platform admin cannot access org-level routes
   if (isPlatformAdmin && (requiredAdmin || requireOrg)) {
@@ -56,21 +51,6 @@ function ProtectedRoute({ children, requiredAdmin, requireOrg }: { children: Rea
   }
 
   return <Layout>{children}</Layout>;
-}
-
-/** Onboarding route: requires auth, but NOT org. Redirects away if already onboarded. */
-function OnboardingRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, isInitialized, profile, isPlatformAdmin } = useAuth();
-
-  if (!isInitialized || isLoading) return <LoadingSpinner />;
-  if (!user) return <Navigate to="/auth" replace />;
-
-  // Already has org or is platform admin — skip onboarding
-  if (profile?.org_id || isPlatformAdmin) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <>{children}</>;
 }
 
 /** Smart dashboard: platform admin sees platform overview, org users see task dashboard */
@@ -86,10 +66,13 @@ function AppRoutes() {
 
   return (
     <Routes>
+      {/* Public routes */}
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+      <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <OnboardingPage />} />
       <Route path="/demo" element={<Demo />} />
-      <Route path="/onboarding" element={<OnboardingRoute><OnboardingPage /></OnboardingRoute>} />
+
+      {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute><SmartDashboard /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute requireOrg><TasksPage /></ProtectedRoute>} />
       <Route path="/tasks/:id" element={<ProtectedRoute requireOrg><TaskDetailPage /></ProtectedRoute>} />

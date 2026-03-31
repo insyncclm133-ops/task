@@ -1,116 +1,199 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Building2, ArrowRight, Sparkles } from 'lucide-react';
+import { Building2, ArrowLeft, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth-context';
+import { toast } from 'sonner';
 
 export function OnboardingPage() {
-  const { profile, refreshAuth } = useAuth();
   const navigate = useNavigate();
+
   const [orgName, setOrgName] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [adminName, setAdminName] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const canSubmit =
+    orgName.trim().length >= 2 &&
+    adminName.trim().length >= 2 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail) &&
+    adminPassword.length >= 6;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = orgName.trim();
-    if (!trimmed) return;
+    if (!canSubmit) return;
 
     setError('');
-    setLoading(true);
+    setIsSubmitting(true);
 
     try {
-      const { error: rpcError } = await supabase.rpc('setup_new_organization', {
-        p_org_name: trimmed,
+      const { data, error: fnError } = await supabase.functions.invoke(
+        'register-organization',
+        {
+          body: {
+            org_name: orgName.trim(),
+            admin_name: adminName.trim(),
+            admin_email: adminEmail.toLowerCase().trim(),
+            admin_password: adminPassword,
+          },
+        },
+      );
+
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+
+      // Auto-login with the new credentials
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: adminEmail.toLowerCase().trim(),
+        password: adminPassword,
       });
 
-      if (rpcError) throw rpcError;
+      if (loginError) {
+        toast.info('Organization created successfully. Please sign in to continue.', {
+          duration: 5000,
+        });
+        navigate('/auth');
+        return;
+      }
 
-      // Refresh auth context to pick up the new org_id, role, etc.
-      await refreshAuth();
-      navigate('/dashboard', { replace: true });
+      toast.success('Welcome! Your organization is ready. Redirecting to dashboard...');
+      navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create organization');
+      setError(
+        err instanceof Error ? err.message : 'Registration failed. Please try again.',
+      );
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const firstName = profile?.first_name || profile?.full_name?.split(' ')[0] || '';
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        {/* Icon */}
-        <div className="flex justify-center mb-6">
-          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
-            <Building2 className="h-8 w-8 text-white" />
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-muted/30 to-background flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <a href="/" className="text-lg font-bold">
+            <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+              Work-Sync
+            </span>
+          </a>
+          <button
+            onClick={() => navigate('/auth')}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Already have an account? Sign In
+          </button>
         </div>
+      </header>
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold">
-            Welcome{firstName ? `, ${firstName}` : ''}!
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            Set up your organization to start managing tasks with your team.
-          </p>
-        </div>
-
-        {/* Card */}
-        <div className="rounded-2xl border bg-card p-8 shadow-xl">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="text-sm font-medium">Organization Name</label>
-              <input
-                type="text"
-                required
-                value={orgName}
-                onChange={(e) => setOrgName(e.target.value)}
-                className="mt-1 w-full h-11 px-3 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="e.g. Acme Corp"
-                autoFocus
-              />
-              <p className="text-[11px] text-muted-foreground mt-1.5">
-                You'll be the admin of this organization.
+      {/* Form */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <div className="rounded-2xl border bg-card shadow-xl overflow-hidden">
+            {/* Card Header */}
+            <div className="text-center px-8 pt-8 pb-4">
+              <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
+                <Building2 className="h-7 w-7 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold">Register Your Organization</h1>
+              <p className="text-muted-foreground mt-2 text-sm">
+                Set up your workspace and start managing tasks with your team.
               </p>
             </div>
 
-            {error && (
-              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                {error}
+            {/* Card Body */}
+            <div className="px-8 pb-8">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Organization Name</label>
+                  <input
+                    type="text"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    className="mt-1 w-full h-11 px-3 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="e.g., Acme Corp"
+                    maxLength={100}
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Your Full Name</label>
+                  <input
+                    type="text"
+                    value={adminName}
+                    onChange={(e) => setAdminName(e.target.value)}
+                    className="mt-1 w-full h-11 px-3 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="e.g., Amit Sengupta"
+                    maxLength={100}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Work Email</label>
+                  <input
+                    type="email"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    className="mt-1 w-full h-11 px-3 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="you@company.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Password</label>
+                  <input
+                    type="password"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className="mt-1 w-full h-11 px-3 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Min. 6 characters"
+                    minLength={6}
+                  />
+                </div>
+
+                {error && (
+                  <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={!canSubmit || isSubmitting}
+                  className="w-full h-12 text-sm font-medium rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating your organization...
+                    </>
+                  ) : (
+                    'Create Organization'
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => navigate('/')}
+                  className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mx-auto"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                  Back to home
+                </button>
               </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || !orgName.trim()}
-              className="w-full h-11 text-sm font-medium rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                'Creating...'
-              ) : (
-                <>
-                  Get Started
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 flex items-center gap-2 text-[11px] text-muted-foreground justify-center">
-            <Sparkles className="h-3 w-3" />
-            <span>You can invite team members after setup</span>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }
