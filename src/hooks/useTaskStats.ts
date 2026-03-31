@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { TaskStats, AIInsight, UserCompletionStat } from '@/types/task';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
-import { startOfWeek, endOfWeek, subWeeks, format } from 'date-fns';
+import { startOfWeek, endOfWeek, subWeeks, format, eachWeekOfInterval } from 'date-fns';
 
 function computeAIInsights(
   totalTasks: number,
@@ -24,7 +24,6 @@ function computeAIInsights(
     return insights;
   }
 
-  // Overdue rate analysis
   const overdueRate = totalTasks > 0 ? overdueTasks / totalTasks : 0;
   if (overdueRate > 0.3) {
     insights.push({
@@ -46,7 +45,6 @@ function computeAIInsights(
     });
   }
 
-  // Urgent tasks check
   const urgentCount = priorityDistribution.find((p) => p.name === 'urgent')?.value ?? 0;
   const highCount = priorityDistribution.find((p) => p.name === 'high')?.value ?? 0;
   if (urgentCount > 0) {
@@ -57,7 +55,6 @@ function computeAIInsights(
     });
   }
 
-  // Workload imbalance
   if (teamWorkload.length > 1) {
     const maxLoad = Math.max(...teamWorkload.map((w) => w.tasks));
     const avgLoad = teamWorkload.reduce((s, w) => s + w.tasks, 0) / teamWorkload.length;
@@ -72,7 +69,6 @@ function computeAIInsights(
     }
   }
 
-  // Completion velocity trend
   if (weeklyTrend.length >= 2) {
     const latest = weeklyTrend[weeklyTrend.length - 1];
     const prev = weeklyTrend[weeklyTrend.length - 2];
@@ -95,7 +91,6 @@ function computeAIInsights(
     }
   }
 
-  // Task backlog growing
   if (weeklyTrend.length > 0) {
     const latest = weeklyTrend[weeklyTrend.length - 1];
     if (latest.created > latest.completed * 2 && latest.created > 3) {
@@ -107,7 +102,6 @@ function computeAIInsights(
     }
   }
 
-  // Low completion rate users
   const lowPerformers = userCompletionStats.filter(
     (u) => u.total >= 3 && u.completionRate < 30,
   );
@@ -119,7 +113,6 @@ function computeAIInsights(
     });
   }
 
-  // Star performers
   const starPerformers = userCompletionStats.filter(
     (u) => u.total >= 3 && u.completionRate >= 80,
   );
@@ -131,7 +124,6 @@ function computeAIInsights(
     });
   }
 
-  // Stale pending tasks
   const pendingCount = statusDistribution.find((s) => s.name === 'pending')?.value ?? 0;
   const inProgressCount = statusDistribution.find((s) => s.name === 'in_progress')?.value ?? 0;
   if (pendingCount > inProgressCount * 3 && pendingCount > 5) {
@@ -145,186 +137,210 @@ function computeAIInsights(
   return insights;
 }
 
-export function useTaskStats() {
+export function useTaskStats(startDate?: string, endDate?: string) {
   const { user } = useAuth();
 
   const { data: stats, isLoading } = useQuery<TaskStats>({
-    queryKey: ['task-stats', user?.id],
+    queryKey: ['task-stats', user?.id, startDate, endDate],
     queryFn: async () => {
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      if (!user) throw new Error('User not authenticated');
 
+      // Single query: fetch all tasks with assigned user profiles
+      const { data: allTasks, error } = await supabase
+        .from('tasks')
+        .select(
+          'id, status, priority, assigned_to, due_date, created_at, completed_at, closed_at, assigned_user:profiles!tasks_assigned_to_fkey(full_name)',
+        );
+
+      if (error) throw error;
+      const rawTasks = allTasks ?? [];
       const now = new Date();
-      const weekStart = startOfWeek(now, { weekStartsOn: 1 }).toISOString();
-      const weekEnd = endOfWeek(now, { weekStartsOn: 1 }).toISOString();
 
-      // My open tasks (pending or in_progress assigned to me)
-      const { count: myOpenTasks } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('assigned_to', user.id)
-        .in('status', ['pending', 'in_progress']);
+      // Filter tasks by date range if provided
+      const filterStart = startDate ? new Date(startDate) : null;
+      const filterEnd = endDate ? new Date(endDate + 'T23:59:59.999Z') : null;
 
-      // Overdue tasks (due_date < now, not completed/closed/cancelled)
-      const { count: overdueTasks } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .lt('due_date', now.toISOString())
-        .in('status', ['pending', 'in_progress']);
+      const tasks =
+        filterStart && filterEnd
+          ? rawTasks.filter((t) => {
+              const created = new Date(t.created_at);
+              if (created > filterEnd) return false;
+              if (t.status === 'pending' || t.status === 'in_progress') return true;
+              if (t.completed_at && new Date(t.completed_at) >= filterStart) return true;
+              if (t.closed_at && new Date(t.closed_at) >= filterStart) return true;
+              return false;
+            })
+          : rawTasks;
 
-      // Completed this week
-      const { count: completedThisWeek } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'completed')
-        .gte('completed_at', weekStart)
-        .lte('completed_at', weekEnd);
+      // My open tasks (current user, always against full dataset)
+      const myOpenTasks = rawTasks.filter(
+        (t) => t.assigned_to === user.id && ['pending', 'in_progress'].includes(t.status),
+      ).length;
 
-      // Total tasks
-      const { count: totalTasks } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true });
+      // Overdue tasks in filtered set
+      const overdueTasks = tasks.filter(
+        (t) =>
+          t.due_date &&
+          new Date(t.due_date) < now &&
+          ['pending', 'in_progress'].includes(t.status),
+      ).length;
+
+      // Completed this week (always current week, full dataset)
+      const weekNowStart = startOfWeek(now, { weekStartsOn: 1 });
+      const weekNowEnd = endOfWeek(now, { weekStartsOn: 1 });
+      const completedThisWeek = rawTasks.filter(
+        (t) =>
+          t.status === 'completed' &&
+          t.completed_at &&
+          new Date(t.completed_at) >= weekNowStart &&
+          new Date(t.completed_at) <= weekNowEnd,
+      ).length;
+
+      const totalTasks = tasks.length;
 
       // Status distribution
-      const statusValues = ['pending', 'in_progress', 'completed', 'cancelled', 'closed'] as const;
-      const statusDistribution: { name: string; value: number }[] = [];
-
-      for (const status of statusValues) {
-        const { count } = await supabase
-          .from('tasks')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', status);
-
-        statusDistribution.push({ name: status, value: count ?? 0 });
+      const statusCounts: Record<string, number> = {
+        pending: 0,
+        in_progress: 0,
+        completed: 0,
+        cancelled: 0,
+        closed: 0,
+      };
+      for (const t of tasks) {
+        if (t.status in statusCounts) statusCounts[t.status]++;
       }
+      const statusDistribution = Object.entries(statusCounts).map(([name, value]) => ({
+        name,
+        value,
+      }));
 
       // Priority distribution
-      const priorityValues = ['low', 'medium', 'high', 'urgent'] as const;
-      const priorityDistribution: { name: string; value: number }[] = [];
-
-      for (const priority of priorityValues) {
-        const { count } = await supabase
-          .from('tasks')
-          .select('*', { count: 'exact', head: true })
-          .eq('priority', priority);
-
-        priorityDistribution.push({ name: priority, value: count ?? 0 });
+      const priorityCounts: Record<string, number> = { low: 0, medium: 0, high: 0, urgent: 0 };
+      for (const t of tasks) {
+        if (t.priority in priorityCounts) priorityCounts[t.priority]++;
       }
+      const priorityDistribution = Object.entries(priorityCounts).map(([name, value]) => ({
+        name,
+        value,
+      }));
 
-      // Weekly trend (last 4 weeks)
-      const weeklyTrend: { week: string; created: number; completed: number }[] = [];
-
-      for (let i = 3; i >= 0; i--) {
-        const ws = startOfWeek(subWeeks(now, i), { weekStartsOn: 1 });
-        const we = endOfWeek(subWeeks(now, i), { weekStartsOn: 1 });
-        const label = format(ws, 'MMM d');
-
-        const { count: created } = await supabase
-          .from('tasks')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', ws.toISOString())
-          .lte('created_at', we.toISOString());
-
-        const { count: completed } = await supabase
-          .from('tasks')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'completed')
-          .gte('completed_at', ws.toISOString())
-          .lte('completed_at', we.toISOString());
-
-        weeklyTrend.push({
-          week: label,
-          created: created ?? 0,
-          completed: completed ?? 0,
-        });
-      }
-
-      // Team workload (tasks per assignee - open tasks only)
-      const { data: workloadData } = await supabase
-        .from('tasks')
-        .select('assigned_to, assigned_user:profiles!tasks_assigned_to_fkey(full_name)')
-        .in('status', ['pending', 'in_progress']);
-
-      const workloadMap = new Map<string, { name: string; tasks: number }>();
-
-      if (workloadData) {
-        for (const row of workloadData) {
-          const assignee = row.assigned_user as unknown as { full_name: string } | null;
-          const name = assignee?.full_name ?? 'Unassigned';
-          const key = row.assigned_to;
-
-          if (workloadMap.has(key)) {
-            workloadMap.get(key)!.tasks += 1;
-          } else {
-            workloadMap.set(key, { name, tasks: 1 });
-          }
-        }
-      }
-
-      const teamWorkload = Array.from(workloadMap.values()).sort(
-        (a, b) => b.tasks - a.tasks,
+      // Weekly trend
+      const trendStart = filterStart ?? startOfWeek(subWeeks(now, 3), { weekStartsOn: 1 });
+      const trendEnd = filterEnd ?? now;
+      const weeks = eachWeekOfInterval(
+        { start: trendStart, end: trendEnd },
+        { weekStartsOn: 1 },
       );
+      const weeklyTrend = weeks.map((ws) => {
+        const we = endOfWeek(ws, { weekStartsOn: 1 });
+        const label = format(ws, 'MMM d');
+        const created = rawTasks.filter((t) => {
+          const c = new Date(t.created_at);
+          return c >= ws && c <= we;
+        }).length;
+        const completed = rawTasks.filter((t) => {
+          if (t.status !== 'completed' || !t.completed_at) return false;
+          const c = new Date(t.completed_at);
+          return c >= ws && c <= we;
+        }).length;
+        return { week: label, created, completed };
+      });
 
-      // User-wise completion stats (all tasks)
-      const { data: allTaskData } = await supabase
-        .from('tasks')
-        .select('assigned_to, status, due_date, assigned_user:profiles!tasks_assigned_to_fkey(full_name)');
+      // Per-user completion stats
+      const userMap = new Map<
+        string,
+        UserCompletionStat
+      >();
+      const completionDaysMap = new Map<string, number[]>();
 
-      const userMap = new Map<string, UserCompletionStat>();
+      for (const task of tasks) {
+        const assignee = task.assigned_user as unknown as { full_name: string } | null;
+        const name = assignee?.full_name ?? 'Unassigned';
+        const userId = task.assigned_to;
 
-      if (allTaskData) {
-        for (const task of allTaskData) {
-          const assignee = task.assigned_user as unknown as { full_name: string } | null;
-          const name = assignee?.full_name ?? 'Unassigned';
-          const userId = task.assigned_to;
+        if (!userMap.has(userId)) {
+          userMap.set(userId, {
+            userId,
+            userName: name,
+            total: 0,
+            completed: 0,
+            inProgress: 0,
+            pending: 0,
+            overdue: 0,
+            onTime: 0,
+            highPriority: 0,
+            avgCompletionDays: null,
+            completionRate: 0,
+          });
+          completionDaysMap.set(userId, []);
+        }
 
-          if (!userMap.has(userId)) {
-            userMap.set(userId, {
-              userId,
-              userName: name,
-              total: 0,
-              completed: 0,
-              inProgress: 0,
-              pending: 0,
-              overdue: 0,
-              completionRate: 0,
-            });
+        const stat = userMap.get(userId)!;
+        stat.total++;
+
+        if (task.status === 'completed' || task.status === 'closed') {
+          stat.completed++;
+          if (task.completed_at && task.due_date) {
+            const completedDate = new Date(task.completed_at);
+            const dueDate = new Date(task.due_date + 'T23:59:59');
+            if (completedDate <= dueDate) {
+              stat.onTime++;
+            }
           }
-
-          const stat = userMap.get(userId)!;
-          stat.total++;
-
-          if (task.status === 'completed' || task.status === 'closed') {
-            stat.completed++;
-          } else if (task.status === 'in_progress') {
-            stat.inProgress++;
-          } else if (task.status === 'pending') {
-            stat.pending++;
+          if (task.completed_at) {
+            const days = Math.max(
+              0,
+              Math.round(
+                (new Date(task.completed_at).getTime() - new Date(task.created_at).getTime()) /
+                  86400000,
+              ),
+            );
+            completionDaysMap.get(userId)!.push(days);
           }
+        } else if (task.status === 'in_progress') {
+          stat.inProgress++;
+        } else if (task.status === 'pending') {
+          stat.pending++;
+        }
 
-          if (
-            task.due_date &&
-            new Date(task.due_date) < now &&
-            (task.status === 'pending' || task.status === 'in_progress')
-          ) {
-            stat.overdue++;
-          }
+        if (
+          task.due_date &&
+          new Date(task.due_date) < now &&
+          ['pending', 'in_progress'].includes(task.status)
+        ) {
+          stat.overdue++;
+        }
+
+        if (task.priority === 'high' || task.priority === 'urgent') {
+          stat.highPriority++;
         }
       }
 
-      for (const stat of userMap.values()) {
-        stat.completionRate = stat.total > 0 ? Math.round((stat.completed / stat.total) * 100) : 0;
+      // Calculate averages and rates
+      for (const [userId, stat] of userMap.entries()) {
+        stat.completionRate =
+          stat.total > 0 ? Math.round((stat.completed / stat.total) * 100) : 0;
+        const days = completionDaysMap.get(userId) ?? [];
+        stat.avgCompletionDays =
+          days.length > 0
+            ? Math.round(days.reduce((a, b) => a + b, 0) / days.length)
+            : null;
       }
 
       const userCompletionStats = Array.from(userMap.values()).sort(
-        (a, b) => b.total - a.total,
+        (a, b) => b.completed - a.completed,
       );
 
-      // Compute AI insights
+      // Team workload (open tasks per user)
+      const teamWorkload = userCompletionStats
+        .filter((u) => u.inProgress + u.pending > 0)
+        .map((u) => ({ name: u.userName, tasks: u.inProgress + u.pending }))
+        .sort((a, b) => b.tasks - a.tasks);
+
+      // AI Insights
       const aiInsights = computeAIInsights(
-        totalTasks ?? 0,
-        overdueTasks ?? 0,
+        totalTasks,
+        overdueTasks,
         statusDistribution,
         priorityDistribution,
         weeklyTrend,
@@ -333,10 +349,10 @@ export function useTaskStats() {
       );
 
       return {
-        myOpenTasks: myOpenTasks ?? 0,
-        overdueTasks: overdueTasks ?? 0,
-        completedThisWeek: completedThisWeek ?? 0,
-        totalTasks: totalTasks ?? 0,
+        myOpenTasks,
+        overdueTasks,
+        completedThisWeek,
+        totalTasks,
         statusDistribution,
         priorityDistribution,
         weeklyTrend,

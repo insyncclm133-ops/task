@@ -179,6 +179,9 @@ export interface UserCompletionStat {
   inProgress: number;
   pending: number;
   overdue: number;
+  onTime: number;
+  highPriority: number;
+  avgCompletionDays: number | null;
   completionRate: number;
 }
 
