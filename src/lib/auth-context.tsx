@@ -6,15 +6,6 @@ import { supabase } from '@/lib/supabase';
 
 export type AppRole = 'platform_admin' | 'admin' | 'sales_manager' | 'sales_agent' | 'support_manager' | 'support_agent' | 'analyst';
 
-interface DesignationPermission {
-  feature_key: string;
-  can_view: boolean | null;
-  can_create: boolean | null;
-  can_edit: boolean | null;
-  can_delete: boolean | null;
-  custom_permissions: unknown;
-}
-
 interface Organization {
   id: string;
   name: string;
@@ -47,16 +38,11 @@ interface AuthContextType {
   isPlatformAdmin: boolean;
   isAdmin: boolean;
   isManager: boolean;
-  designationPermissions: DesignationPermission[];
 
   // Loading
   isLoading: boolean;
   isInitialized: boolean;
   profileError: string | null;
-
-  // Permission helpers
-  hasPermission: (featureKey: string, permission: 'view' | 'create' | 'edit' | 'delete') => boolean;
-  canAccessFeature: (featureKey: string) => boolean;
 
   // Actions
   signIn: (email: string, password: string) => Promise<void>;
@@ -73,7 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userRole, setUserRole] = useState<AppRole | null>(null);
-  const [designationPermissions, setDesignationPermissions] = useState<DesignationPermission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -119,36 +104,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Platform admin: skip org/designation fetching (they have no org)
       if (role === 'platform_admin') {
         setOrganization(null);
-        setDesignationPermissions([]);
         return;
       }
 
-      // Org user: fetch org and permissions in parallel
+      // Org user: fetch org context
       const orgId = profileRes.data.org_id;
-      const designationId = profileRes.data.designation_id;
 
-      const [orgRes, permissionsRes] = await Promise.all([
-        orgId
-          ? supabase
-              .from('organizations')
-              .select('id, name, logo_url, plan, trial_ends_at')
-              .eq('id', orgId)
-              .single()
-          : Promise.resolve({ data: null, error: null }),
-        designationId
-          ? supabase
-              .from('designation_feature_access')
-              .select('feature_key, can_view, can_create, can_edit, can_delete, custom_permissions')
-              .eq('designation_id', designationId)
-          : Promise.resolve({ data: [], error: null }),
-      ]);
+      const orgRes = orgId
+        ? await supabase
+            .from('organizations')
+            .select('id, name, logo_url, plan, trial_ends_at')
+            .eq('id', orgId)
+            .single()
+        : { data: null, error: null };
 
       if (orgRes.data) {
         setOrganization(orgRes.data);
-      }
-
-      if (permissionsRes.data) {
-        setDesignationPermissions(permissionsRes.data as DesignationPermission[]);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -221,7 +192,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
           setOrganization(null);
           setUserRole(null);
-          setDesignationPermissions([]);
           setIsLoading(false);
         }
       }
@@ -275,34 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setOrganization(null);
     setUserRole(null);
-    setDesignationPermissions([]);
   };
-
-  const hasPermission = useCallback(
-    (featureKey: string, permission: 'view' | 'create' | 'edit' | 'delete'): boolean => {
-      if (userRole === 'platform_admin' || userRole === 'admin') return true;
-
-      const perm = designationPermissions.find((p) => p.feature_key === featureKey);
-      if (!perm) return true;
-
-      const map = {
-        view: perm.can_view,
-        create: perm.can_create,
-        edit: perm.can_edit,
-        delete: perm.can_delete,
-      };
-
-      return map[permission] ?? false;
-    },
-    [designationPermissions, userRole]
-  );
-
-  const canAccessFeature = useCallback(
-    (featureKey: string): boolean => {
-      return hasPermission(featureKey, 'view');
-    },
-    [hasPermission]
-  );
 
   const isPlatformAdmin = userRole === 'platform_admin';
   const isAdmin = userRole === 'admin';
@@ -330,12 +273,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isPlatformAdmin,
     isAdmin,
     isManager,
-    designationPermissions,
     isLoading,
     isInitialized,
     profileError,
-    hasPermission,
-    canAccessFeature,
     signIn,
     signUp,
     signOut,

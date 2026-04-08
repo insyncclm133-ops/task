@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ListTodo, LogOut, User, Users, Shield, Briefcase, Settings, Menu, X, Wallet, Clock, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, ListTodo, LogOut, User, Users, Briefcase, Settings, Menu, X, Wallet, Clock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationBell } from '@/components/tasks/NotificationBell';
@@ -39,7 +39,6 @@ export function Layout({ children }: LayoutProps) {
       ? [
           { to: '/users', icon: Users, label: 'Users' },
           { to: '/designations', icon: Briefcase, label: 'Designations' },
-          { to: '/access-management', icon: Shield, label: 'Access' },
           { to: '/billing', icon: Wallet, label: 'Billing' },
         ]
       : [];
