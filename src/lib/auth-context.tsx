@@ -19,7 +19,6 @@ interface Organization {
   id: string;
   name: string;
   logo_url: string | null;
-  plan: string;
 }
 
 interface AuthContextType {
@@ -37,7 +36,6 @@ interface AuthContextType {
   organization: Organization | null;
   orgName: string;
   orgLogo: string;
-  orgPlan: string;
 
   // Roles & permissions
   userRole: AppRole | null;
@@ -128,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         orgId
           ? supabase
               .from('organizations')
-              .select('id, name, logo_url, plan')
+              .select('id, name, logo_url')
               .eq('id', orgId)
               .single()
           : Promise.resolve({ data: null, error: null }),
@@ -315,7 +313,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     organization,
     orgName: organization?.name ?? '',
     orgLogo: organization?.logo_url ?? '',
-    orgPlan: organization?.plan ?? 'welcome',
     userRole,
     isPlatformAdmin,
     isAdmin,
