@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ListTodo, LogOut, User, Users, Shield, Briefcase, Settings, Menu, X, Wallet } from 'lucide-react';
+import { LayoutDashboard, ListTodo, LogOut, User, Users, Shield, Briefcase, Settings, Menu, X, Wallet, Clock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationBell } from '@/components/tasks/NotificationBell';
@@ -14,7 +14,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile, isAdmin, userRole, orgName, signOut } = useAuth();
+  const { user, profile, isAdmin, userRole, orgName, signOut, isPlatformAdmin, trialDaysLeft, isTrialExpired, orgPlan } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,7 +24,7 @@ export function Layout({ children }: LayoutProps) {
     if (isMobile) setSidebarOpen(false);
   }, [location.pathname, isMobile]);
 
-  const { isPlatformAdmin } = useAuth();
+  const showTrialBanner = !isPlatformAdmin && orgPlan === 'trial' && (isTrialExpired || trialDaysLeft <= 5);
 
   const navItems = isPlatformAdmin
     ? [{ to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' }]
@@ -166,6 +166,34 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <main className="min-h-screen p-6 pt-16 lg:ml-64 lg:pt-8">
+        {/* Trial banner */}
+        {showTrialBanner && (
+          <div className={`flex items-center gap-3 rounded-xl px-4 py-3 mb-4 text-sm ${
+            isTrialExpired
+              ? 'bg-destructive/10 border border-destructive/30 text-destructive'
+              : trialDaysLeft <= 2
+              ? 'bg-orange-50 border border-orange-200 text-orange-800'
+              : 'bg-amber-50 border border-amber-200 text-amber-800'
+          }`}>
+            {isTrialExpired
+              ? <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              : <Clock className="h-4 w-4 flex-shrink-0" />
+            }
+            <span className="flex-1">
+              {isTrialExpired
+                ? 'Your 14-day free trial has expired.'
+                : `Your free trial expires in ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'}.`
+              }
+            </span>
+            <Link
+              to="/billing"
+              className="flex-shrink-0 font-semibold underline underline-offset-2 hover:opacity-80"
+            >
+              Upgrade now
+            </Link>
+          </div>
+        )}
+
         {/* Top bar with notification */}
         <div className="flex justify-end mb-4">
           <NotificationBell

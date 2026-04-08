@@ -19,6 +19,8 @@ interface Organization {
   id: string;
   name: string;
   logo_url: string | null;
+  plan: string;
+  trial_ends_at: string;
 }
 
 interface AuthContextType {
@@ -36,6 +38,9 @@ interface AuthContextType {
   organization: Organization | null;
   orgName: string;
   orgLogo: string;
+  orgPlan: string;
+  trialDaysLeft: number;
+  isTrialExpired: boolean;
 
   // Roles & permissions
   userRole: AppRole | null;
@@ -126,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         orgId
           ? supabase
               .from('organizations')
-              .select('id, name, logo_url')
+              .select('id, name, logo_url, plan, trial_ends_at')
               .eq('id', orgId)
               .single()
           : Promise.resolve({ data: null, error: null }),
@@ -303,6 +308,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = userRole === 'admin';
   const isManager = isAdmin || userRole === 'sales_manager' || userRole === 'support_manager';
 
+  const trialDaysLeft = organization
+    ? Math.ceil((new Date(organization.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const isTrialExpired = !isPlatformAdmin && !!organization && organization.plan === 'trial' && trialDaysLeft <= 0;
+
   const value: AuthContextType = {
     session,
     user,
@@ -313,6 +323,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     organization,
     orgName: organization?.name ?? '',
     orgLogo: organization?.logo_url ?? '',
+    orgPlan: organization?.plan ?? 'trial',
+    trialDaysLeft,
+    isTrialExpired,
     userRole,
     isPlatformAdmin,
     isAdmin,

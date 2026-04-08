@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
@@ -35,7 +35,8 @@ function LoadingSpinner() {
 }
 
 function ProtectedRoute({ children, requiredAdmin, requireOrg }: { children: React.ReactNode; requiredAdmin?: boolean; requireOrg?: boolean }) {
-  const { user, isLoading, isInitialized, isAdmin, isPlatformAdmin } = useAuth();
+  const { user, isLoading, isInitialized, isAdmin, isPlatformAdmin, isTrialExpired } = useAuth();
+  const location = useLocation();
 
   if (!isInitialized || isLoading) return <LoadingSpinner />;
   if (!user) return <Navigate to="/auth" replace />;
@@ -48,6 +49,11 @@ function ProtectedRoute({ children, requiredAdmin, requireOrg }: { children: Rea
   // Org admin routes require org admin role
   if (requiredAdmin && !isAdmin) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // Trial expired: only billing page is accessible
+  if (isTrialExpired && location.pathname !== '/billing') {
+    return <Navigate to="/billing" replace />;
   }
 
   return <Layout>{children}</Layout>;

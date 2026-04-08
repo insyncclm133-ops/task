@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
 import {
   Wallet, IndianRupee, CreditCard, CheckCircle,
-  Receipt, Crown, Phone,
+  Receipt, Crown, Phone, Clock, AlertTriangle, ArrowRight,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 const container = {
   hidden: { opacity: 0 },
@@ -31,6 +32,9 @@ const transactions = [
 ];
 
 export function BillingPage() {
+  const { orgPlan, trialDaysLeft, isTrialExpired } = useAuth();
+  const isOnTrial = orgPlan === 'trial';
+
   return (
     <motion.div variants={container} initial="hidden" animate="show">
       {/* Header */}
@@ -44,6 +48,43 @@ export function BillingPage() {
         </h1>
         <p className="text-muted-foreground mt-1">Manage your plan, WhatsApp wallet, and payment history</p>
       </motion.div>
+
+      {/* Trial status banner */}
+      {isOnTrial && (
+        <motion.div variants={fadeUp} className="mb-6">
+          <div className={`rounded-2xl border p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 ${
+            isTrialExpired
+              ? 'border-destructive/40 bg-destructive/5'
+              : trialDaysLeft <= 2
+              ? 'border-orange-200 bg-orange-50/60'
+              : 'border-amber-200 bg-amber-50/60'
+          }`}>
+            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl flex-shrink-0 ${
+              isTrialExpired ? 'bg-destructive/10' : 'bg-amber-100'
+            }`}>
+              {isTrialExpired
+                ? <AlertTriangle className="h-7 w-7 text-destructive" />
+                : <Clock className="h-7 w-7 text-amber-600" />
+              }
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm">
+                {isTrialExpired ? 'Your free trial has expired' : `Free trial — ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} remaining`}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                {isTrialExpired
+                  ? 'Upgrade to Work-Sync Team to restore full access for your organization.'
+                  : 'You have full access to all features during your trial. Upgrade anytime to keep access after it ends.'
+                }
+              </p>
+            </div>
+            <button className="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors">
+              Upgrade Now
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Top row: WhatsApp Wallet + Current Plan */}
       <motion.div variants={fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
