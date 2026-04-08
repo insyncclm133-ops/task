@@ -82,7 +82,7 @@ export function BillingPage() {
         </div>
 
         {/* Current Plan Card */}
-        <div className="relative overflow-hidden rounded-2xl border bg-card p-7">
+        <div className="relative rounded-2xl border bg-card p-7">
           <div className="absolute -top-4 right-6">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/25">
               <Crown className="h-3.5 w-3.5" />
