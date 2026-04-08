@@ -1,8 +1,11 @@
 import { motion } from 'framer-motion';
 import {
   Wallet, IndianRupee, CreditCard, CheckCircle,
-  Receipt, Crown, Phone,
+  Receipt, Crown, Phone, Zap, ArrowRight,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
 const container = {
   hidden: { opacity: 0 },
@@ -30,7 +33,24 @@ const transactions = [
   { desc: 'Team Plan — 5 users × ₹199', amount: '-₹995.00', type: 'debit' as const, date: 'Pending' },
 ];
 
+const WELCOME_LIMIT = 100;
+
 export function BillingPage() {
+  const { orgPlan, orgId } = useAuth();
+  const isWelcomePlan = orgPlan === 'welcome';
+
+  const { data: orgTaskCount = 0 } = useQuery({
+    queryKey: ['org-task-count', orgId],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId!);
+      return count ?? 0;
+    },
+    enabled: isWelcomePlan && !!orgId,
+  });
+
   return (
     <motion.div variants={container} initial="hidden" animate="show">
       {/* Header */}
@@ -46,9 +66,9 @@ export function BillingPage() {
       </motion.div>
 
       {/* Top row: WhatsApp Wallet + Current Plan */}
-      <motion.div variants={fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* WhatsApp Wallet Card */}
-        <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-7">
+      <motion.div variants={fadeUp} className={`grid grid-cols-1 ${isWelcomePlan ? '' : 'lg:grid-cols-2'} gap-6 mb-8`}>
+        {/* WhatsApp Wallet Card — only shown on paid plan */}
+        {!isWelcomePlan && <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-7">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl" />
           <div className="relative">
             <div className="flex items-center gap-4 mb-5">
@@ -79,43 +99,93 @@ export function BillingPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* Current Plan Card */}
-        <div className="relative rounded-2xl border bg-card p-7">
-          <div className="absolute -top-4 right-6">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/25">
-              <Crown className="h-3.5 w-3.5" />
-              Active Plan
-            </span>
-          </div>
-
-          <div className="pt-4">
-            <h3 className="text-xl font-bold mb-1">Work-Sync Team</h3>
-            <p className="text-sm text-muted-foreground mb-5">Full task accountability for your team</p>
-
-            <div className="mb-6">
-              <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold tracking-tight">₹199</span>
-                <span className="text-muted-foreground text-lg">/user/month</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Billed quarterly</p>
+        {isWelcomePlan ? (
+          <div className="relative rounded-2xl border-2 border-primary/30 bg-primary/5 p-7 flex flex-col">
+            <div className="absolute -top-4 right-6">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/80 px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/25">
+                <Zap className="h-3.5 w-3.5" />
+                Welcome Tier
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {planFeatures.map((feat) => (
-                <div key={feat} className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                  {feat}
+            <div className="pt-4 flex-1">
+              <h3 className="text-xl font-bold mb-1">Welcome Tier</h3>
+              <p className="text-sm text-muted-foreground mb-5">Get started free — first 100 tasks + notifications included</p>
+
+              <div className="mb-5">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="font-medium">Tasks used</span>
+                  <span className="font-bold">{orgTaskCount} / {WELCOME_LIMIT}</span>
                 </div>
-              ))}
+                <div className="w-full h-3 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-3 rounded-full transition-all ${orgTaskCount >= WELCOME_LIMIT ? 'bg-destructive' : 'bg-primary'}`}
+                    style={{ width: `${Math.min((orgTaskCount / WELCOME_LIMIT) * 100, 100)}%` }}
+                  />
+                </div>
+                {orgTaskCount >= WELCOME_LIMIT && (
+                  <p className="text-xs text-destructive mt-1.5">Limit reached — upgrade to create more tasks</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
+                {['100 tasks included', 'Email notifications', 'WhatsApp notifications', 'All core features'].map((feat) => (
+                  <div key={feat} className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                    {feat}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-primary/20 bg-card p-4">
+              <p className="text-sm font-semibold mb-1">Ready to grow?</p>
+              <p className="text-xs text-muted-foreground mb-3">Upgrade to Work-Sync Team for unlimited tasks at ₹199/user/month.</p>
+              <button className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25">
+                Upgrade to Work-Sync Team
+                <ArrowRight className="h-4 w-4" />
+              </button>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="relative rounded-2xl border bg-card p-7">
+            <div className="absolute -top-4 right-6">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-lg shadow-primary/25">
+                <Crown className="h-3.5 w-3.5" />
+                Active Plan
+              </span>
+            </div>
+
+            <div className="pt-4">
+              <h3 className="text-xl font-bold mb-1">Work-Sync Team</h3>
+              <p className="text-sm text-muted-foreground mb-5">Full task accountability for your team</p>
+
+              <div className="mb-6">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-5xl font-extrabold tracking-tight">₹199</span>
+                  <span className="text-muted-foreground text-lg">/user/month</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Billed quarterly</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {planFeatures.map((feat) => (
+                  <div key={feat} className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                    {feat}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </motion.div>
 
-      {/* Subscription Info Banner */}
-      <motion.div variants={fadeUp} className="mb-8">
+      {/* Subscription Info Banner — only on paid plan */}
+      {!isWelcomePlan && <motion.div variants={fadeUp} className="mb-8">
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 flex-shrink-0">
             <IndianRupee className="h-7 w-7 text-primary" />
@@ -129,7 +199,7 @@ export function BillingPage() {
             </p>
           </div>
         </div>
-      </motion.div>
+      </motion.div>}
 
       {/* Transaction History */}
       <motion.div variants={fadeUp} className="rounded-2xl border bg-card p-6">

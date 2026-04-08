@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, BarChart3, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { Plus, BarChart3, AlertTriangle, Clock, CheckCircle, Zap } from 'lucide-react';
 import type { Task, TaskFilters as TaskFiltersType, CreateTaskInput, UpdateTaskInput } from '@/types/task';
 import { useAuth } from '@/lib/auth-context';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { useTasks } from '@/hooks/useTasks';
 import { useProfiles } from '@/hooks/useProfiles';
 import { useTaskStats } from '@/hooks/useTaskStats';
@@ -18,7 +20,7 @@ import { PaginationControls } from '@/components/tasks/PaginationControls';
 
 export function TasksPage() {
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, orgId, orgPlan } = useAuth();
   const currentUserId = user?.id || '';
 
   const [filters, setFilters] = useState<TaskFiltersType>({
@@ -31,6 +33,23 @@ export function TasksPage() {
   const { tasks, totalCount, isLoading, createTask, updateTask } = useTasks(filters);
   const { profiles } = useProfiles();
   const { stats } = useTaskStats();
+
+  const WELCOME_LIMIT = 100;
+  const isWelcomePlan = orgPlan === 'welcome';
+
+  const { data: orgTaskCount = 0 } = useQuery({
+    queryKey: ['org-task-count', orgId],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId!);
+      return count ?? 0;
+    },
+    enabled: isWelcomePlan && !!orgId,
+  });
+
+  const isAtLimit = isWelcomePlan && orgTaskCount >= WELCOME_LIMIT;
 
   // Dialog state
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -139,13 +158,31 @@ export function TasksPage() {
             <p className="text-sm text-muted-foreground">{totalCount || 0} total tasks</p>
           </div>
           <button
-            onClick={() => { setEditingTask(null); setTaskDialogOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => { if (!isAtLimit) { setEditingTask(null); setTaskDialogOpen(true); } }}
+            disabled={isAtLimit}
+            title={isAtLimit ? 'Task limit reached. Upgrade to Work-Sync Team to create more.' : undefined}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="h-4 w-4" />
             New Task
           </button>
         </div>
+
+        {/* Task limit banner */}
+        {isAtLimit && (
+          <div className="mb-4 flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">
+            <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <span className="flex-1 text-destructive">
+              You've used all 100 free tasks on the Welcome Tier.
+            </span>
+            <button
+              onClick={() => navigate('/billing')}
+              className="flex-shrink-0 text-xs font-semibold text-primary underline underline-offset-2"
+            >
+              Upgrade now
+            </button>
+          </div>
+        )}
 
         {/* Filters */}
         <TaskFilters
@@ -198,6 +235,37 @@ export function TasksPage() {
       {/* Stats Sidebar */}
       <div className="hidden lg:block w-72 flex-shrink-0">
         <div className="sticky top-20 space-y-4">
+          {/* Welcome tier usage */}
+          {isWelcomePlan && (
+            <div className={`rounded-lg border p-4 ${isAtLimit ? 'border-destructive/50 bg-destructive/5' : 'border-primary/30 bg-primary/5'}`}>
+              <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
+                <Zap className="h-4 w-4 text-primary" />
+                Welcome Tier
+              </h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                {isAtLimit
+                  ? 'Task limit reached. Upgrade to continue.'
+                  : `${WELCOME_LIMIT - orgTaskCount} free tasks remaining`}
+              </p>
+              <div className="w-full h-2 rounded-full bg-muted overflow-hidden mb-3">
+                <div
+                  className={`h-2 rounded-full transition-all ${isAtLimit ? 'bg-destructive' : 'bg-primary'}`}
+                  style={{ width: `${Math.min((orgTaskCount / WELCOME_LIMIT) * 100, 100)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                <span>{orgTaskCount} used</span>
+                <span>{WELCOME_LIMIT} limit</span>
+              </div>
+              <button
+                onClick={() => navigate('/billing')}
+                className="w-full px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Upgrade to Work-Sync Team
+              </button>
+            </div>
+          )}
+
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
