@@ -66,6 +66,9 @@ export function TaskDialog({
 
   if (!open) return null;
 
+  const set = (key: string, value: string) =>
+    setFormData((p) => ({ ...p, [key]: value }));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const tags = formData.tags
@@ -78,22 +81,38 @@ export function TaskDialog({
       description: formData.description || undefined,
       assigned_to: formData.assigned_to,
       due_date: formData.due_date,
-      start_date: formData.start_date || undefined,
+      ...(isEditing && { start_date: formData.start_date || undefined }),
       priority: formData.priority,
-      tags: tags.length > 0 ? tags : undefined,
-      estimated_hours: formData.estimated_hours ? Number(formData.estimated_hours) : undefined,
+      ...(isEditing && { tags: tags.length > 0 ? tags : undefined }),
+      ...(isEditing && {
+        estimated_hours: formData.estimated_hours ? Number(formData.estimated_hours) : undefined,
+      }),
     };
 
     onSubmit(data);
   };
 
+  const inputCls =
+    'mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
       <div className="relative bg-background rounded-lg shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-lg font-semibold">{isEditing ? 'Edit Task' : 'Create Task'}</h2>
-          <button onClick={() => onOpenChange(false)} className="p-1 rounded-md hover:bg-muted">
+
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 border-b">
+          <div>
+            <h2 className="text-lg font-semibold">
+              {isEditing ? 'Edit Task' : 'Create New Task'}
+            </h2>
+            {!isEditing && (
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Create a new task and assign it to a team member
+              </p>
+            )}
+          </div>
+          <button onClick={() => onOpenChange(false)} className="p-1 rounded-md hover:bg-muted mt-0.5">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -101,13 +120,16 @@ export function TaskDialog({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Task Name */}
           <div>
-            <label className="text-sm font-medium">Task Name *</label>
+            <label className="text-sm font-medium">
+              Task Name <span className="text-destructive">*</span>
+            </label>
             <input
               type="text"
               required
+              autoFocus
               value={formData.task_name}
-              onChange={(e) => setFormData((p) => ({ ...p, task_name: e.target.value }))}
-              className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              onChange={(e) => set('task_name', e.target.value)}
+              className={inputCls}
               placeholder="Enter task name"
             />
           </div>
@@ -117,16 +139,18 @@ export function TaskDialog({
             <label className="text-sm font-medium">Description</label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+              onChange={(e) => set('description', e.target.value)}
               rows={3}
-              className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-              placeholder="Describe the task..."
+              className={`${inputCls} resize-none`}
+              placeholder="Enter task description (optional)"
             />
           </div>
 
           {/* Assign To */}
           <div>
-            <label className="text-sm font-medium">Assign To *</label>
+            <label className="text-sm font-medium">
+              Assign To <span className="text-destructive">*</span>
+            </label>
             {isEditing && !canReassign ? (
               <div className="mt-1 flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-input bg-muted text-muted-foreground">
                 <Lock className="h-4 w-4" />
@@ -137,47 +161,68 @@ export function TaskDialog({
               <select
                 required
                 value={formData.assigned_to}
-                onChange={(e) => setFormData((p) => ({ ...p, assigned_to: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                onChange={(e) => set('assigned_to', e.target.value)}
+                className={inputCls}
               >
-                <option value="">Select assignee</option>
+                <option value="">Select team member</option>
                 {profiles.map((p) => (
-                  <option key={p.id} value={p.id}>{p.full_name}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.full_name}
+                  </option>
                 ))}
               </select>
             )}
           </div>
 
-          {/* Due Date & Start Date */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Due Date (and Start Date in edit mode) */}
+          {isEditing ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">
+                  Due Date <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.due_date}
+                  onChange={(e) => set('due_date', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Start Date</label>
+                <input
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => set('start_date', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+          ) : (
             <div>
-              <label className="text-sm font-medium">Due Date *</label>
+              <label className="text-sm font-medium">
+                Due Date <span className="text-destructive">*</span>
+              </label>
               <input
                 type="date"
                 required
                 value={formData.due_date}
-                onChange={(e) => setFormData((p) => ({ ...p, due_date: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                onChange={(e) => set('due_date', e.target.value)}
+                className={inputCls}
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Start Date</label>
-              <input
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => setFormData((p) => ({ ...p, start_date: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          </div>
+          )}
 
           {/* Priority */}
           <div>
-            <label className="text-sm font-medium">Priority *</label>
+            <label className="text-sm font-medium">
+              Priority <span className="text-destructive">*</span>
+            </label>
             <select
               value={formData.priority}
-              onChange={(e) => setFormData((p) => ({ ...p, priority: e.target.value as TaskPriority }))}
-              className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              onChange={(e) => set('priority', e.target.value)}
+              className={inputCls}
             >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
@@ -186,31 +231,33 @@ export function TaskDialog({
             </select>
           </div>
 
-          {/* Tags */}
-          <div>
-            <label className="text-sm font-medium">Tags</label>
-            <input
-              type="text"
-              value={formData.tags}
-              onChange={(e) => setFormData((p) => ({ ...p, tags: e.target.value }))}
-              className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Comma-separated tags"
-            />
-          </div>
-
-          {/* Estimated Hours */}
-          <div>
-            <label className="text-sm font-medium">Estimated Hours</label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={formData.estimated_hours}
-              onChange={(e) => setFormData((p) => ({ ...p, estimated_hours: e.target.value }))}
-              className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="0"
-            />
-          </div>
+          {/* Tags & Estimated Hours — edit mode only */}
+          {isEditing && (
+            <>
+              <div>
+                <label className="text-sm font-medium">Tags</label>
+                <input
+                  type="text"
+                  value={formData.tags}
+                  onChange={(e) => set('tags', e.target.value)}
+                  className={inputCls}
+                  placeholder="Comma-separated tags"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Estimated Hours</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={formData.estimated_hours}
+                  onChange={(e) => set('estimated_hours', e.target.value)}
+                  className={inputCls}
+                  placeholder="0"
+                />
+              </div>
+            </>
+          )}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
@@ -226,7 +273,7 @@ export function TaskDialog({
               disabled={isSubmitting}
               className="px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {isSubmitting ? 'Saving...' : isEditing ? 'Update Task' : 'Create Task'}
+              {isSubmitting ? 'Saving…' : isEditing ? 'Update Task' : 'Create Task'}
             </button>
           </div>
         </form>

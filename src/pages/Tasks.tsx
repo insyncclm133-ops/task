@@ -7,10 +7,13 @@ import { useAuth } from '@/lib/auth-context';
 import { useTasks } from '@/hooks/useTasks';
 import { useProfiles } from '@/hooks/useProfiles';
 import { useTaskStats } from '@/hooks/useTaskStats';
+import { useStartTask } from '@/hooks/useStartTask';
+import { useCompleteTask } from '@/hooks/useCompleteTask';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { SubtaskDialog } from '@/components/tasks/SubtaskDialog';
+import { StartTaskDialog } from '@/components/tasks/StartTaskDialog';
 import { CompleteTaskDialog } from '@/components/tasks/CompleteTaskDialog';
 import { CloseTaskDialog } from '@/components/tasks/CloseTaskDialog';
 import { RestartTaskDialog } from '@/components/tasks/RestartTaskDialog';
@@ -31,11 +34,14 @@ export function TasksPage() {
   const { tasks, totalCount, isLoading, createTask, updateTask } = useTasks(filters);
   const { profiles } = useProfiles();
   const { stats } = useTaskStats();
+  const startTask = useStartTask();
+  const completeTask = useCompleteTask();
 
   // Dialog state
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [subtaskParent, setSubtaskParent] = useState<Task | null>(null);
+  const [startingTask, setStartingTask] = useState<Task | null>(null);
   const [completingTask, setCompletingTask] = useState<Task | null>(null);
   const [closingTask, setClosingTask] = useState<Task | null>(null);
   const [restartingTask, setRestartingTask] = useState<Task | null>(null);
@@ -72,20 +78,26 @@ export function TasksPage() {
     }
   };
 
-  const handleStartTask = async (task: Task) => {
-    await updateTask.mutateAsync({ id: task.id, status: 'in_progress' });
+  const handleStartTask = (task: Task) => {
+    setStartingTask(task);
   };
 
-  const handleCompleteTask = async (notes: string, _files: File[]) => {
+  const handleStartConfirm = async (files: File[]) => {
+    if (!startingTask) return;
+    setIsSubmitting(true);
+    try {
+      await startTask.mutateAsync({ taskId: startingTask.id, files });
+      setStartingTask(null);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCompleteTask = async (notes: string, files: File[]) => {
     if (!completingTask) return;
     setIsSubmitting(true);
     try {
-      await updateTask.mutateAsync({
-        id: completingTask.id,
-        status: 'completed',
-        completion_notes: notes,
-        completion_percentage: 100,
-      });
+      await completeTask.mutateAsync({ taskId: completingTask.id, notes, files });
       setCompletingTask(null);
     } finally {
       setIsSubmitting(false);
@@ -279,6 +291,16 @@ export function TasksPage() {
           parentTask={subtaskParent}
           profiles={profiles}
           onSubmit={handleCreateSubtask}
+          isSubmitting={isSubmitting}
+        />
+      )}
+
+      {startingTask && (
+        <StartTaskDialog
+          open={!!startingTask}
+          onOpenChange={(open) => { if (!open) setStartingTask(null); }}
+          task={startingTask}
+          onSubmit={handleStartConfirm}
           isSubmitting={isSubmitting}
         />
       )}

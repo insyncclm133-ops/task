@@ -12,6 +12,8 @@ import { useTaskComments } from '@/hooks/useTaskComments';
 import { useTaskAttachments } from '@/hooks/useTaskAttachments';
 import { useProfiles } from '@/hooks/useProfiles';
 import { useTasks } from '@/hooks/useTasks';
+import { useStartTask } from '@/hooks/useStartTask';
+import { useCompleteTask } from '@/hooks/useCompleteTask';
 import { cn, formatDate, formatDateTime } from '@/lib/utils';
 import { getStatusColor, getStatusLabel, getPriorityColor, getPriorityLabel } from '@/lib/taskUtils';
 import * as perms from '@/lib/taskUtils';
@@ -20,6 +22,7 @@ import { TaskAttachments } from '@/components/tasks/TaskAttachments';
 import { SubtaskList } from '@/components/tasks/SubtaskList';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { SubtaskDialog } from '@/components/tasks/SubtaskDialog';
+import { StartTaskDialog } from '@/components/tasks/StartTaskDialog';
 import { CompleteTaskDialog } from '@/components/tasks/CompleteTaskDialog';
 import { CloseTaskDialog } from '@/components/tasks/CloseTaskDialog';
 import { RestartTaskDialog } from '@/components/tasks/RestartTaskDialog';
@@ -30,14 +33,17 @@ export function TaskDetailPage() {
   const { user, isAdmin } = useAuth();
   const currentUserId = user?.id || '';
 
-  const { task, isLoading, updateTask, startTask, completeTask, closeTask, restartTask, cancelTask } = useTaskDetail(id!);
+  const { task, isLoading, updateTask, closeTask, restartTask, cancelTask } = useTaskDetail(id!);
   const { comments, isLoading: commentsLoading, addComment } = useTaskComments(id!);
   const { attachments, isLoading: attachmentsLoading, uploadAttachment, deleteAttachment, getDownloadUrl } = useTaskAttachments(id!);
   const { profiles } = useProfiles();
   const { createTask: createSubtask } = useTasks({ page: 1, items_per_page: 1 });
+  const startTask = useStartTask();
+  const completeTask = useCompleteTask();
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);
+  const [startDialogOpen, setStartDialogOpen] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [restartDialogOpen, setRestartDialogOpen] = useState(false);
@@ -63,10 +69,20 @@ export function TaskDetailPage() {
     }
   };
 
+  const handleStart = async (files: File[]) => {
+    setIsSubmitting(true);
+    try {
+      await startTask.mutateAsync({ taskId: id!, files });
+      setStartDialogOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleComplete = async (notes: string, files: File[]) => {
     setIsSubmitting(true);
     try {
-      await completeTask.mutateAsync({ completion_notes: notes, files });
+      await completeTask.mutateAsync({ taskId: id!, notes, files });
       setCompleteDialogOpen(false);
     } finally {
       setIsSubmitting(false);
@@ -131,7 +147,7 @@ export function TaskDetailPage() {
           {/* Action buttons */}
           <div className="flex items-center gap-2">
             {perms.canStartTask(task.status, currentUserId, task.assigned_to) && (
-              <button onClick={() => startTask.mutate()} className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">
+              <button onClick={() => setStartDialogOpen(true)} className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">
                 <Play className="h-3.5 w-3.5" /> Start
               </button>
             )}
@@ -340,6 +356,16 @@ export function TaskDetailPage() {
               setIsSubmitting(false);
             }
           }}
+          isSubmitting={isSubmitting}
+        />
+      )}
+
+      {startDialogOpen && (
+        <StartTaskDialog
+          open={startDialogOpen}
+          onOpenChange={setStartDialogOpen}
+          task={task}
+          onSubmit={handleStart}
           isSubmitting={isSubmitting}
         />
       )}
