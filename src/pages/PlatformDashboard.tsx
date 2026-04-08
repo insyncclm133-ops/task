@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Building2, Users, ListTodo, AlertTriangle, CheckCircle, TrendingUp,
-  Clock, Activity,
+  Clock, Activity, Settings2,
 } from 'lucide-react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Legend,
@@ -9,6 +10,7 @@ import {
 } from 'recharts';
 import { usePlatformDashboard } from '@/hooks/usePlatformDashboard';
 import type { OrgRow } from '@/hooks/usePlatformDashboard';
+import { OrgManagementModal } from '@/components/platform/OrgManagementModal';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 12 },
@@ -33,8 +35,15 @@ function timeAgo(ts: string | null) {
   return `${days}d ago`;
 }
 
+const PLAN_BADGE: Record<string, string> = {
+  trial: 'bg-amber-100 text-amber-700',
+  team: 'bg-violet-100 text-violet-700',
+  business: 'bg-emerald-100 text-emerald-700',
+};
+
 export function PlatformDashboard() {
   const { data, isLoading } = usePlatformDashboard();
+  const [managingOrg, setManagingOrg] = useState<OrgRow | null>(null);
 
   if (isLoading) {
     return <div className="text-center py-12 text-muted-foreground">Loading platform dashboard...</div>;
@@ -187,18 +196,27 @@ export function PlatformDashboard() {
               <thead>
                 <tr className="border-b text-left text-xs text-muted-foreground">
                   <th className="pb-2 font-medium">Organization</th>
+                  <th className="pb-2 font-medium text-center">Plan</th>
                   <th className="pb-2 font-medium text-center">Members</th>
                   <th className="pb-2 font-medium text-center">Tasks</th>
                   <th className="pb-2 font-medium text-center">Active</th>
                   <th className="pb-2 font-medium text-center">Overdue</th>
                   <th className="pb-2 font-medium text-center">Done %</th>
                   <th className="pb-2 font-medium text-right">Last Activity</th>
+                  <th className="pb-2 font-medium text-right"></th>
                 </tr>
               </thead>
               <tbody>
                 {orgRows.map((org) => (
                   <tr key={org.id} className="border-b last:border-0 hover:bg-muted/30">
                     <td className="py-2.5 font-medium">{org.name}</td>
+                    <td className="py-2.5 text-center">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${PLAN_BADGE[org.plan] ?? 'bg-muted text-muted-foreground'}`}>
+                        {org.plan === 'trial'
+                          ? org.trialDaysLeft > 0 ? `Trial (${org.trialDaysLeft}d)` : 'Expired'
+                          : org.plan.charAt(0).toUpperCase() + org.plan.slice(1)}
+                      </span>
+                    </td>
                     <td className="py-2.5 text-center">{org.members}</td>
                     <td className="py-2.5 text-center">{org.totalTasks}</td>
                     <td className="py-2.5 text-center">
@@ -221,11 +239,20 @@ export function PlatformDashboard() {
                       </span>
                     </td>
                     <td className="py-2.5 text-right text-muted-foreground text-xs">{timeAgo(org.lastActivity)}</td>
+                    <td className="py-2.5 text-right">
+                      <button
+                        onClick={() => setManagingOrg(org)}
+                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        title="Manage org"
+                      >
+                        <Settings2 className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {orgRows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-muted-foreground text-xs">No organizations yet</td>
+                    <td colSpan={9} className="py-8 text-center text-muted-foreground text-xs">No organizations yet</td>
                   </tr>
                 )}
               </tbody>
@@ -258,6 +285,14 @@ export function PlatformDashboard() {
           </div>
         </motion.div>
       </div>
+
+      {managingOrg && (
+        <OrgManagementModal
+          org={managingOrg}
+          open={!!managingOrg}
+          onClose={() => setManagingOrg(null)}
+        />
+      )}
     </motion.div>
   );
 }

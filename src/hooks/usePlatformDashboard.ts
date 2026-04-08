@@ -4,6 +4,9 @@ import { supabase } from '@/lib/supabase';
 export interface OrgRow {
   id: string;
   name: string;
+  plan: string;
+  trialEndsAt: string | null;
+  trialDaysLeft: number;
   members: number;
   totalTasks: number;
   activeTasks: number;
@@ -39,7 +42,7 @@ export function usePlatformDashboard() {
     queryKey: ['platform-dashboard'],
     queryFn: async () => {
       const [orgsRes, profilesRes, tasksRes, rolesRes] = await Promise.all([
-        supabase.from('organizations').select('id, name, created_at'),
+        supabase.from('organizations').select('id, name, plan, trial_ends_at, created_at'),
         supabase.from('profiles').select('id, full_name, org_id, is_active, created_at'),
         supabase.from('tasks').select('id, org_id, status, due_date, created_at, updated_at'),
         supabase.from('user_roles').select('user_id, org_id, role, is_active').neq('role', 'platform_admin'),
@@ -63,9 +66,17 @@ export function usePlatformDashboard() {
         );
         const lastTask = orgTasks.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
 
+        const trialEndsAt = (org as { trial_ends_at?: string }).trial_ends_at ?? null;
+        const trialDaysLeft = trialEndsAt
+          ? Math.ceil((new Date(trialEndsAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+
         return {
           id: org.id,
           name: org.name,
+          plan: (org as { plan?: string }).plan ?? 'trial',
+          trialEndsAt,
+          trialDaysLeft,
           members: orgMembers.length,
           totalTasks: orgTasks.length,
           activeTasks: active.length,
