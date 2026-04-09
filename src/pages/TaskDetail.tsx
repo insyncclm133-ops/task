@@ -147,8 +147,8 @@ export function TaskDetailPage() {
           {/* Action buttons */}
           <div className="flex items-center gap-2">
             {perms.canStartTask(task.status, currentUserId, task.assigned_to) && (
-              <button onClick={() => setStartDialogOpen(true)} className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">
-                <Play className="h-3.5 w-3.5" /> Start
+              <button onClick={() => setStartDialogOpen(true)} className="flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-blue-200 transition-all">
+                <Play className="h-5 w-5" /> Start Activity
               </button>
             )}
             {perms.canCompleteTask(task.status, currentUserId, task.assigned_to) && (
@@ -157,8 +157,8 @@ export function TaskDetailPage() {
               </button>
             )}
             {perms.canCloseTask(task.status, currentUserId, task.assigned_by, isAdmin) && (
-              <button onClick={() => setCloseDialogOpen(true)} className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md bg-purple-600 text-white hover:bg-purple-700">
-                <Lock className="h-3.5 w-3.5" /> Close
+              <button onClick={() => setCloseDialogOpen(true)} className="flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-purple-200 transition-all">
+                <Lock className="h-5 w-5" /> Close Activity
               </button>
             )}
             {perms.canCancelTask(task.status, currentUserId, task.assigned_by, isAdmin) && (

@@ -153,10 +153,9 @@ export function TaskCard({
             {perms.canStartTask(task.status, currentUserId, task.assigned_to) && (
               <button
                 onClick={(e) => { e.stopPropagation(); onStart(task); }}
-                className="p-1.5 rounded-md hover:bg-blue-100 text-blue-600"
-                title="Start"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors"
               >
-                <Play className="h-4 w-4" />
+                <Play className="h-3.5 w-3.5" /> Start
               </button>
             )}
             {perms.canCompleteTask(task.status, currentUserId, task.assigned_to) && (
@@ -171,10 +170,9 @@ export function TaskCard({
             {perms.canCloseTask(task.status, currentUserId, task.assigned_by, isAdmin) && (
               <button
                 onClick={(e) => { e.stopPropagation(); onClose(task); }}
-                className="p-1.5 rounded-md hover:bg-purple-100 text-purple-600"
-                title="Close"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 shadow-sm transition-colors"
               >
-                <Lock className="h-4 w-4" />
+                <Lock className="h-3.5 w-3.5" /> Close
               </button>
             )}
             {perms.canCancelTask(task.status, currentUserId, task.assigned_by, isAdmin) && (
