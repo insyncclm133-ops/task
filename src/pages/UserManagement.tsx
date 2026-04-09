@@ -130,6 +130,7 @@ export function UserManagementPage() {
   };
 
   const filteredUsers = userRoles.filter((ur) => {
+    if (ur.role === 'platform_admin') return false;
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     const name = ur.profiles?.full_name?.toLowerCase() || '';
