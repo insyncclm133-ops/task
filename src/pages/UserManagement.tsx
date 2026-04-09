@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit2, UserX, X, Users, Search } from 'lucide-react';
-import type { UserRole, Designation, AppRole } from '@/types/user';
+import type { UserRole, AppRole } from '@/types/user';
 import { APP_ROLES, getRoleBadgeColor } from '@/types/user';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -9,7 +9,6 @@ import { useAuth } from '@/lib/auth-context';
 export function UserManagementPage() {
   const { profile } = useAuth();
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
-  const [designations, setDesignations] = useState<Designation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -24,7 +23,7 @@ export function UserManagementPage() {
     try {
       const { data, error: fetchError } = await supabase
         .from('user_roles')
-        .select('*, profiles(*, designation:designations(*))')
+        .select('*, profiles(*)')
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -36,24 +35,9 @@ export function UserManagementPage() {
     }
   }, []);
 
-  const fetchDesignations = useCallback(async () => {
-    const { data, error: fetchError } = await supabase
-      .from('designations')
-      .select('*')
-      .eq('is_active', true)
-      .order('name');
-
-    if (fetchError) {
-      console.error('Error fetching designations:', fetchError);
-      return;
-    }
-    setDesignations(data || []);
-  }, []);
-
   useEffect(() => {
     fetchUsers();
-    fetchDesignations();
-  }, [fetchUsers, fetchDesignations]);
+  }, [fetchUsers]);
 
   const handleCreate = () => {
     setEditingUser(null);
@@ -110,7 +94,6 @@ export function UserManagementPage() {
             last_name: formData.last_name,
             phone: formData.phone,
             role: formData.role,
-            designation_id: formData.designation_id || null,
             department: formData.department || null,
           },
         });
@@ -128,7 +111,6 @@ export function UserManagementPage() {
             last_name: formData.last_name,
             phone: formData.phone,
             role: formData.role,
-            designation_id: formData.designation_id || null,
             department: formData.department || null,
           },
         });
@@ -208,7 +190,6 @@ export function UserManagementPage() {
                 <th className="text-left px-4 py-3 font-medium">Phone</th>
                 <th className="text-left px-4 py-3 font-medium">Department</th>
                 <th className="text-left px-4 py-3 font-medium">Role</th>
-                <th className="text-left px-4 py-3 font-medium">Designation</th>
                 <th className="text-left px-4 py-3 font-medium">Status</th>
                 {isAdminUser && <th className="text-right px-4 py-3 font-medium">Actions</th>}
               </tr>
@@ -216,7 +197,7 @@ export function UserManagementPage() {
             <tbody>
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdminUser ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                  <td colSpan={isAdminUser ? 7 : 6} className="text-center py-8 text-muted-foreground">
                     No users found.
                   </td>
                 </tr>
@@ -233,9 +214,6 @@ export function UserManagementPage() {
                       >
                         {APP_ROLES.find((r) => r.value === ur.role)?.label || ur.role}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {ur.profiles?.designation?.name || '-'}
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -283,7 +261,6 @@ export function UserManagementPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         user={editingUser}
-        designations={designations}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         error={error}
@@ -302,20 +279,18 @@ interface UserFormData {
   phone: string;
   department: string;
   role: AppRole;
-  designation_id: string;
 }
 
 interface UserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: UserRole | null;
-  designations: Designation[];
   onSubmit: (data: UserFormData) => void;
   isSubmitting: boolean;
   error: string | null;
 }
 
-function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmitting, error }: UserDialogProps) {
+function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }: UserDialogProps) {
   const isEditing = !!user;
 
   const [formData, setFormData] = useState<UserFormData>({
@@ -326,7 +301,6 @@ function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmit
     phone: '',
     department: '',
     role: 'sales_agent',
-    designation_id: '',
   });
 
   useEffect(() => {
@@ -339,7 +313,6 @@ function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmit
         phone: user.profiles.phone || '',
         department: user.profiles.department || '',
         role: user.role,
-        designation_id: user.profiles.designation_id || '',
       });
     } else {
       setFormData({
@@ -350,7 +323,6 @@ function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmit
         phone: '',
         department: '',
         role: 'sales_agent',
-        designation_id: '',
       });
     }
   }, [user, open]);
@@ -474,23 +446,6 @@ function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmit
               {APP_ROLES.map((r) => (
                 <option key={r.value} value={r.value}>
                   {r.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Designation */}
-          <div>
-            <label className="text-sm font-medium">Designation</label>
-            <select
-              value={formData.designation_id}
-              onChange={(e) => setFormData((p) => ({ ...p, designation_id: e.target.value }))}
-              className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">No designation</option>
-              {designations.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
                 </option>
               ))}
             </select>

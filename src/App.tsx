@@ -11,7 +11,6 @@ import { AuthPage } from '@/pages/Auth';
 import { LandingPage } from '@/pages/Landing';
 import { OnboardingPage } from '@/pages/Onboarding';
 import { UserManagementPage } from '@/pages/UserManagement';
-import { DesignationsPage } from '@/pages/Designations';
 import { BillingPage } from '@/pages/Billing';
 import { ProfilePage } from '@/pages/Profile';
 import Demo from '@/pages/Demo';
@@ -86,7 +85,6 @@ function AppRoutes() {
       {/* Admin routes (org-level) */}
       <Route path="/billing" element={<ProtectedRoute requiredAdmin><BillingPage /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute requiredAdmin><UserManagementPage /></ProtectedRoute>} />
-      <Route path="/designations" element={<ProtectedRoute requiredAdmin><DesignationsPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

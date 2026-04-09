@@ -26,7 +26,6 @@
     <meta name="twitter:description" content="Hierarchical task accountability with WhatsApp + email alerts at every step — built for how Indian teams actually work." />
 
     <link rel="apple-touch-icon" href="/pwa-192x192.svg" />
-    <link rel="manifest" href="/manifest.webmanifest" />
     <title>Work-Sync — Task Accountability for Indian Teams</title>
 
     <!-- JSON-LD Structured Data -->
@@ -102,12 +101,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js');
-        });
-      }
-    </script>
   </body>
 </html>
