@@ -11,12 +11,28 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { org_name, admin_name, admin_email, admin_password } = await req.json();
+    const {
+      org_name,
+      admin_name,
+      admin_email,
+      admin_password,
+      admin_phone,
+      verification_id,
+      email_otp,
+      phone_otp,
+    } = await req.json();
 
-    // Validate inputs
-    if (!org_name || !admin_name || !admin_email || !admin_password) {
+    // ── Basic validation ───────────────────────────────────────────────────
+    if (!org_name || !admin_name || !admin_email || !admin_password || !admin_phone) {
       return new Response(
         JSON.stringify({ error: 'All fields are required' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (!verification_id || !email_otp || !phone_otp) {
+      return new Response(
+        JSON.stringify({ error: 'OTP verification is required' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -46,14 +62,55 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    const trimmedEmail = admin_email.toLowerCase().trim();
+
+    // ── Verify OTPs ────────────────────────────────────────────────────────
+    const { data: verification, error: verErr } = await supabase
+      .from('otp_verifications')
+      .select('*')
+      .eq('id', verification_id)
+      .eq('email', trimmedEmail)
+      .single();
+
+    if (verErr || !verification) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired verification session. Please request new OTPs.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (new Date() > new Date(verification.expires_at)) {
+      await supabase.from('otp_verifications').delete().eq('id', verification_id);
+      return new Response(
+        JSON.stringify({ error: 'OTPs have expired. Please request new ones.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (verification.email_otp !== email_otp.trim()) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email OTP. Please check and try again.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (verification.phone_otp !== phone_otp.trim()) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid WhatsApp OTP. Please check and try again.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // OTPs verified — delete the record
+    await supabase.from('otp_verifications').delete().eq('id', verification_id);
+
+    // ── Create organization ────────────────────────────────────────────────
     const trimmedName = org_name.trim();
     const trimmedAdminName = admin_name.trim();
-    const trimmedEmail = admin_email.toLowerCase().trim();
     const nameParts = trimmedAdminName.split(' ');
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ');
 
-    // 1. Create organization
     const { data: org, error: orgErr } = await supabase
       .from('organizations')
       .insert({ name: trimmedName })
@@ -68,21 +125,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Create auth user (email auto-confirmed)
+    // ── Create auth user (email already verified via OTP) ──────────────────
     const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
       email: trimmedEmail,
       password: admin_password,
       email_confirm: true,
-      user_metadata: {
-        full_name: trimmedAdminName,
-        first_name: firstName,
-        last_name: lastName,
-      },
+      user_metadata: { full_name: trimmedAdminName, first_name: firstName, last_name: lastName },
     });
 
     if (authErr || !authData.user) {
       console.error('Auth user creation failed:', authErr);
-      // Clean up the organization we just created
       await supabase.from('organizations').delete().eq('id', org.id);
 
       const message = authErr?.message?.includes('already been registered')
@@ -97,40 +149,26 @@ Deno.serve(async (req) => {
 
     const userId = authData.user.id;
 
-    // 3. Update profile (auto-created by handle_new_user trigger) with org linkage
-    const { error: profileErr } = await supabase
-      .from('profiles')
-      .update({
-        org_id: org.id,
-        full_name: trimmedAdminName,
-        first_name: firstName,
-        last_name: lastName,
-        onboarding_completed: true,
-      })
-      .eq('id', userId);
+    // ── Update profile ─────────────────────────────────────────────────────
+    await supabase.from('profiles').update({
+      org_id: org.id,
+      full_name: trimmedAdminName,
+      first_name: firstName,
+      last_name: lastName,
+      phone: admin_phone,
+      onboarding_completed: true,
+    }).eq('id', userId);
 
-    if (profileErr) {
-      console.error('Profile update failed:', profileErr);
-    }
-
-    // 4. Assign admin role
-    const { error: roleErr } = await supabase.from('user_roles').insert({
+    // ── Assign admin role ──────────────────────────────────────────────────
+    await supabase.from('user_roles').insert({
       user_id: userId,
       org_id: org.id,
       role: 'admin',
       is_active: true,
     });
 
-    if (roleErr) {
-      console.error('Role assignment failed:', roleErr);
-    }
-
     return new Response(
-      JSON.stringify({
-        success: true,
-        org_id: org.id,
-        user_id: userId,
-      }),
+      JSON.stringify({ success: true, org_id: org.id, user_id: userId }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err) {
