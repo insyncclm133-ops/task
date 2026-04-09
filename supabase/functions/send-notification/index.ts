@@ -73,15 +73,15 @@ function buildWhatsAppTemplateBody(
   appUrl: string,
 ): object {
   // Template: worksync_task_notification
-  // Body: "Hi {{1}}, here's an update from Work-Sync:\n\n*{{2}}*\n{{3}}"
+  // Body: "Hi {{1}}, you have a new update on Work-Sync:\n\n{{2}}\n\nLog in to stay on track."
   // Button (URL): "Open Task" → <appUrl>/tasks/<taskId>
+  const content = `${notification.title}\n${notification.message}`;
   const components: object[] = [
     {
       type: 'body',
       parameters: [
         { type: 'text', text: userName },
-        { type: 'text', text: notification.title },
-        { type: 'text', text: notification.message },
+        { type: 'text', text: content },
       ],
     },
   ];
