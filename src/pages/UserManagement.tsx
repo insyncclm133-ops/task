@@ -86,7 +86,6 @@ export function UserManagementPage() {
       if (editingUser) {
         // Update user
         const { error: invokeError } = await supabase.functions.invoke('manage-user', {
-          method: 'PUT',
           body: {
             action: 'update-user',
             user_id: editingUser.user_id,
@@ -103,7 +102,6 @@ export function UserManagementPage() {
       } else {
         // Create user
         const { error: invokeError } = await supabase.functions.invoke('manage-user', {
-          method: 'POST',
           body: {
             action: 'create-user',
             email: formData.email,
