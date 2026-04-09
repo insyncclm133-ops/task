@@ -10,6 +10,7 @@ export function useTasks(filters: TaskFilters) {
 
   const { data, isLoading } = useQuery({
     queryKey: ['tasks', filters],
+    enabled: !!user,
     queryFn: async () => {
       let query = supabase
         .from('tasks')
@@ -68,7 +69,7 @@ export function useTasks(filters: TaskFilters) {
       const { data, error, count } = await query;
 
       if (error) {
-        throw error;
+        throw new Error(error.message ?? 'Failed to fetch tasks');
       }
 
       const tasks = data as Task[];
