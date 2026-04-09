@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, BarChart3, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import type { Task, TaskFilters as TaskFiltersType, CreateTaskInput, UpdateTaskInput } from '@/types/task';
@@ -20,15 +20,22 @@ import { PaginationControls } from '@/components/tasks/PaginationControls';
 
 export function TasksPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isAdmin } = useAuth();
   const currentUserId = user?.id || '';
 
   const [filters, setFilters] = useState<TaskFiltersType>({
-    status: 'all',
+    status: (searchParams.get('status') as TaskFiltersType['status']) || 'all',
     priority: 'all',
     page: 1,
     items_per_page: 10,
   });
+
+  // Sync filters when URL status param changes (e.g. sidebar click)
+  useEffect(() => {
+    const urlStatus = (searchParams.get('status') as TaskFiltersType['status']) || 'all';
+    setFilters((prev) => ({ ...prev, status: urlStatus, page: 1 }));
+  }, [searchParams]);
 
   const { tasks, totalCount, isLoading, createTask, updateTask } = useTasks(filters);
   const { profiles } = useProfiles();
@@ -49,6 +56,10 @@ export function TasksPage() {
 
   const handleFiltersChange = (changes: Partial<TaskFiltersType>) => {
     setFilters((prev) => ({ ...prev, ...changes }));
+    if ('status' in changes) {
+      const s = changes.status;
+      setSearchParams(s && s !== 'all' ? { status: s } : {}, { replace: true });
+    }
   };
 
   const handleCreateTask = async (data: CreateTaskInput | UpdateTaskInput) => {

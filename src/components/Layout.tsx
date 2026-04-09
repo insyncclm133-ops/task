@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ListTodo, LogOut, User, Users, Settings, Menu, X, Wallet, Clock, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, ListTodo, LogOut, User, Users, Settings, Menu, X, Wallet, Clock, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationBell } from '@/components/tasks/NotificationBell';
@@ -25,6 +25,21 @@ export function Layout({ children }: LayoutProps) {
   }, [location.pathname, isMobile]);
 
   const showTrialBanner = !isPlatformAdmin && orgPlan === 'trial' && (isTrialExpired || trialDaysLeft <= 5);
+
+  const isOnTasks = location.pathname === '/tasks';
+  const [tasksOpen, setTasksOpen] = useState(isOnTasks);
+  useEffect(() => { if (isOnTasks) setTasksOpen(true); }, [isOnTasks]);
+
+  const taskSubItems = [
+    { label: 'All', status: 'all', color: 'bg-gray-400' },
+    { label: 'Pending', status: 'pending', color: 'bg-yellow-400' },
+    { label: 'In Progress', status: 'in_progress', color: 'bg-blue-400' },
+    { label: 'Completed', status: 'completed', color: 'bg-green-400' },
+    { label: 'Cancelled', status: 'cancelled', color: 'bg-orange-400' },
+    { label: 'Closed', status: 'closed', color: 'bg-purple-400' },
+  ];
+
+  const currentStatus = new URLSearchParams(location.search).get('status') || 'all';
 
   const navItems = isPlatformAdmin
     ? [{ to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' }]
@@ -52,21 +67,65 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
-              location.pathname === item.to
-                ? 'bg-sidebar-accent text-sidebar-primary'
-                : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white'
-            )}
-          >
-            <item.icon className="h-4.5 w-4.5" />
-            {item.label}
-          </Link>
-        ))}
+        {navItems.map((item) => {
+          if (item.to === '/tasks') {
+            return (
+              <div key={item.to}>
+                <button
+                  onClick={() => setTasksOpen((o) => !o)}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
+                    isOnTasks
+                      ? 'bg-sidebar-accent text-sidebar-primary'
+                      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white'
+                  )}
+                >
+                  <item.icon className="h-4.5 w-4.5 flex-shrink-0" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {tasksOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                </button>
+                {tasksOpen && (
+                  <div className="mt-1 ml-4 pl-3 border-l border-sidebar-border space-y-0.5">
+                    {taskSubItems.map((sub) => {
+                      const isActive = isOnTasks && currentStatus === sub.status;
+                      const href = sub.status === 'all' ? '/tasks' : `/tasks?status=${sub.status}`;
+                      return (
+                        <Link
+                          key={sub.status}
+                          to={href}
+                          className={cn(
+                            'flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors',
+                            isActive
+                              ? 'bg-sidebar-accent/60 text-white'
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-white'
+                          )}
+                        >
+                          <span className={cn('h-1.5 w-1.5 rounded-full flex-shrink-0', sub.color)} />
+                          {sub.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
+                location.pathname === item.to
+                  ? 'bg-sidebar-accent text-sidebar-primary'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white'
+              )}
+            >
+              <item.icon className="h-4.5 w-4.5" />
+              {item.label}
+            </Link>
+          );
+        })}
 
         {adminNavItems.length > 0 && (
           <>
