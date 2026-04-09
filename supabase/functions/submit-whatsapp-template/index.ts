@@ -1,8 +1,18 @@
 import { corsHeaders } from '../_shared/cors.ts';
 
-// Submits both WhatsApp templates to Meta via Exotel.
+// Submits all 3 WhatsApp templates to Meta via Exotel.
 // Call this once after deployment to register the templates.
 // Templates will be in PENDING state until Meta approves them (24-48 hrs).
+
+const SUMMARY_BODY_COMPONENTS = (period: string, exampleInsight: string) => [
+  {
+    type: 'BODY',
+    text: `Hi {{1}},\n\nHere is your ${period} Work-Sync summary:\n\nCompleted: {{2}}\nIn Progress: {{3}}\nOverdue: {{4}}\n\nKey Insight:\n{{5}}\n\nThis report is sent by Work-Sync`,
+    example: {
+      body_text: [['Priya', '5', '3', '1', exampleInsight]],
+    },
+  },
+];
 
 const TEMPLATES = [
   {
@@ -31,18 +41,16 @@ const TEMPLATES = [
     ],
   },
   {
-    name: 'worksync_summary',
+    name: 'worksync_weekly_summary',
     category: 'UTILITY',
     language: 'en',
-    components: [
-      {
-        type: 'BODY',
-        text: 'Hi {{1}},\n\nHere is your {{2}} Work-Sync summary:\n\nCompleted: {{3}}\nIn Progress: {{4}}\nOverdue: {{5}}\n\nKey Insight:\n{{6}}\n\nThis report is sent by Work-Sync',
-        example: {
-          body_text: [['Priya', 'Weekly', '5', '3', '1', 'You completed 5 tasks this week with an 83% on-time rate. Keep it up!']],
-        },
-      },
-    ],
+    components: SUMMARY_BODY_COMPONENTS('weekly', 'You completed 5 tasks this week with an 83% on-time rate. Keep it up!'),
+  },
+  {
+    name: 'worksync_monthly_summary',
+    category: 'UTILITY',
+    language: 'en',
+    components: SUMMARY_BODY_COMPONENTS('monthly', 'Team closed 22 tasks in March with a 91% on-time rate — best month yet!'),
   },
 ];
 

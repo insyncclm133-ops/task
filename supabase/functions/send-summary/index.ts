@@ -372,13 +372,12 @@ Deno.serve(async (req) => {
                     content: {
                       type: 'template',
                       template: {
-                        name: 'worksync_summary',
+                        name: period === 'weekly' ? 'worksync_weekly_summary' : 'worksync_monthly_summary',
                         language: { code: 'en' },
                         components: [{
                           type: 'body',
                           parameters: [
                             { type: 'text', text: user.full_name || 'there' },
-                            { type: 'text', text: label },
                             { type: 'text', text: waText },
                             { type: 'text', text: waInProgress },
                             { type: 'text', text: waOverdue },
