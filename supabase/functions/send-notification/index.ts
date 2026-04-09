@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
 
     if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && profile.phone) {
       try {
-        const appUrl = Deno.env.get('APP_URL') || 'https://lemon-pebble-0d1ca2d1e.azurestaticapps.net';
+        const appUrl = Deno.env.get('APP_URL') || 'https://task.in-sync.co.in';
         const credentials = btoa(`${exotelApiKey}:${exotelApiToken}`);
         const waRes = await fetch(
           `https://api.exotel.com/v2/accounts/${exotelAccountSid}/messages`,
