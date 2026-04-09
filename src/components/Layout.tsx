@@ -33,8 +33,8 @@ export function Layout({ children }: LayoutProps) {
     { label: 'Pending', status: 'pending', color: 'bg-yellow-400' },
     { label: 'In Progress', status: 'in_progress', color: 'bg-blue-400' },
     { label: 'Completed', status: 'completed', color: 'bg-green-400' },
-    { label: 'Cancelled', status: 'cancelled', color: 'bg-orange-400' },
     { label: 'Closed', status: 'closed', color: 'bg-purple-400' },
+    { label: 'Cancelled', status: 'cancelled', color: 'bg-orange-400' },
   ];
 
   const currentStatus = new URLSearchParams(location.search).get('status') || 'all';
