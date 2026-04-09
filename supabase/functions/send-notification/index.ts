@@ -10,6 +10,19 @@ interface NotificationRecord {
   task_id: string | null;
 }
 
+interface TaskDetails {
+  task_name: string;
+  description: string | null;
+  due_date: string | null;
+  assigned_by: string | null;
+}
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return 'Not set';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 function buildEmailHtml(
   notification: NotificationRecord,
   userName: string,
@@ -50,7 +63,7 @@ function buildEmailHtml(
             <p style="margin:0 0 24px;color:#6b7280;font-size:13px;line-height:1.6;">${notification.message}</p>
             ${
               notification.task_id
-                ? `<a href="#" style="display:inline-block;background:#7c3aed;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;">View Task</a>`
+                ? `<a href="https://task.in-sync.co.in/tasks/${notification.task_id}" style="display:inline-block;background:#7c3aed;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;">View Task</a>`
                 : ''
             }
           </td>
@@ -68,30 +81,54 @@ function buildEmailHtml(
 }
 
 function buildWhatsAppTemplateBody(
-  notification: NotificationRecord,
   userName: string,
-  appUrl: string,
+  taskName: string,
+  creatorName: string,
+  description: string,
+  dueDate: string,
+  taskId: string | null,
 ): object {
-  // Template: worksync_task_notification
-  // Body: "Hi {{1}}, you have a new update on Work-Sync:\n\n{{2}}\n\nLog in to stay on track."
-  // Button (URL): "Open Task" → <appUrl>/tasks/<taskId>
-  const content = `${notification.title}\n${notification.message}`;
+  // Approved template: worksync_task_notification
+  // Body:
+  //   Hi {{1}},
+  //
+  //   Here's an update from Work-Sync:
+  //
+  //   Task - *{{2}}*
+  //
+  //   Creator:
+  //   {{3}}
+  //
+  //   Description
+  //   {{4}}
+  //
+  //   Expected completion date:
+  //
+  //   {{5}}
+  //
+  //   This notification is sent by Work-Sync
+  //
+  // Button (dynamic URL): "Open Task" → https://task.in-sync.co.in/tasks/{{1}}
+
   const components: object[] = [
     {
       type: 'body',
       parameters: [
         { type: 'text', text: userName },
-        { type: 'text', text: content },
+        { type: 'text', text: taskName },
+        { type: 'text', text: creatorName },
+        { type: 'text', text: description },
+        { type: 'text', text: dueDate },
       ],
     },
   ];
 
-  if (notification.task_id) {
+  if (taskId) {
     components.push({
       type: 'button',
       sub_type: 'url',
       index: '0',
-      parameters: [{ type: 'text', text: notification.task_id }],
+      parameters: [{ type: 'text', text: taskId }],
     });
   }
 
@@ -121,11 +158,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Look up user profile
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Look up recipient profile
     const { data: profile, error: profileError } = await adminClient
       .from('profiles')
       .select('email, phone, full_name')
@@ -138,6 +175,35 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'User profile not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
+    }
+
+    // Fetch task details for WhatsApp template variables
+    let taskName = notification.title;
+    let creatorName = 'Work-Sync';
+    let description = notification.message;
+    let dueDate = 'Not set';
+
+    if (notification.task_id) {
+      const { data: task } = await adminClient
+        .from('tasks')
+        .select('task_name, description, due_date, assigned_by')
+        .eq('id', notification.task_id)
+        .single<TaskDetails>();
+
+      if (task) {
+        taskName = task.task_name;
+        description = task.description || notification.message;
+        dueDate = formatDate(task.due_date);
+
+        if (task.assigned_by) {
+          const { data: creator } = await adminClient
+            .from('profiles')
+            .select('full_name')
+            .eq('id', task.assigned_by)
+            .single();
+          creatorName = creator?.full_name || 'Work-Sync';
+        }
+      }
     }
 
     const results: { email: unknown; whatsapp: unknown } = {
@@ -179,7 +245,6 @@ Deno.serve(async (req) => {
 
     if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && profile.phone) {
       try {
-        const appUrl = Deno.env.get('APP_URL') || 'https://task.in-sync.co.in';
         const credentials = btoa(`${exotelApiKey}:${exotelApiToken}`);
         const waRes = await fetch(
           `https://api.exotel.com/v2/accounts/${exotelAccountSid}/messages`,
@@ -196,9 +261,12 @@ Deno.serve(async (req) => {
                     from: exotelWhatsAppFrom,
                     to: profile.phone,
                     content: buildWhatsAppTemplateBody(
-                      notification,
                       profile.full_name || 'there',
-                      appUrl,
+                      taskName,
+                      creatorName,
+                      description,
+                      dueDate,
+                      notification.task_id,
                     ),
                   },
                 ],
