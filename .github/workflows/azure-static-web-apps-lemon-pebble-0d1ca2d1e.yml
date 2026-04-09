@@ -40,10 +40,10 @@ jobs:
 
       - name: Deploy Supabase Edge Functions
         run: |
-          supabase functions deploy manage-user --project-ref seijjmcncrbekngurxxj
-          supabase functions deploy send-notification --project-ref seijjmcncrbekngurxxj
-          supabase functions deploy send-otp --project-ref seijjmcncrbekngurxxj
-          supabase functions deploy register-organization --project-ref seijjmcncrbekngurxxj
+          supabase functions deploy manage-user --project-ref seijjmcncrbekngurxxj --no-verify-jwt
+          supabase functions deploy send-notification --project-ref seijjmcncrbekngurxxj --no-verify-jwt
+          supabase functions deploy send-otp --project-ref seijjmcncrbekngurxxj --no-verify-jwt
+          supabase functions deploy register-organization --project-ref seijjmcncrbekngurxxj --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
