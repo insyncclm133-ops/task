@@ -30,11 +30,14 @@ export function useStartTask() {
         if (attachError) throw attachError;
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('tasks')
         .update({ status: 'in_progress', start_date: new Date().toISOString() })
-        .eq('id', taskId);
+        .eq('id', taskId)
+        .select()
+        .single();
       if (error) throw error;
+      if (!data) throw new Error('Task not found or you do not have permission to start it.');
     },
     onSuccess: (_data, { taskId }) => {
       qc.invalidateQueries({ queryKey: ['tasks'] });
