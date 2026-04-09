@@ -21,13 +21,12 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Client with user's JWT to check permissions
-    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    // Get the calling user
-    const { data: { user: caller }, error: authError } = await userClient.auth.getUser();
+    // Verify the JWT by passing it directly — getUser() without an argument
+    // uses the client's stored session (null on a fresh server-side client)
+    // and ignores global.headers, so it must be passed explicitly.
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user: caller }, error: authError } = await adminClient.auth.getUser(token);
     if (authError || !caller) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
@@ -36,8 +35,6 @@ Deno.serve(async (req) => {
     }
 
     // Check if the caller is an admin or super_admin
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-
     const { data: callerRole } = await adminClient
       .from('user_roles')
       .select('role')
