@@ -83,9 +83,18 @@ export function UserManagementPage() {
     setError(null);
 
     try {
+      // Explicitly retrieve the session token — functions.invoke can silently
+      // fall back to the anon key if getSession() fails internally.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Session expired. Please refresh the page and try again.');
+      }
+      const authHeaders = { Authorization: `Bearer ${session.access_token}` };
+
       if (editingUser) {
         // Update user
         const { error: invokeError } = await supabase.functions.invoke('manage-user', {
+          headers: authHeaders,
           body: {
             action: 'update-user',
             user_id: editingUser.user_id,
@@ -102,6 +111,7 @@ export function UserManagementPage() {
       } else {
         // Create user
         const { error: invokeError } = await supabase.functions.invoke('manage-user', {
+          headers: authHeaders,
           body: {
             action: 'create-user',
             email: formData.email,
