@@ -67,12 +67,42 @@ function buildEmailHtml(
 </html>`;
 }
 
-function buildWhatsAppMessage(notification: NotificationRecord): string {
-  const lines = [`*${notification.title}*`, '', notification.message];
+function buildWhatsAppTemplateBody(
+  notification: NotificationRecord,
+  userName: string,
+  appUrl: string,
+): object {
+  // Template: worksync_task_notification
+  // Body: "Hi {{1}}, here's an update from Work-Sync:\n\n*{{2}}*\n{{3}}"
+  // Button (URL): "Open Task" → <appUrl>/tasks/<taskId>
+  const components: object[] = [
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: userName },
+        { type: 'text', text: notification.title },
+        { type: 'text', text: notification.message },
+      ],
+    },
+  ];
+
   if (notification.task_id) {
-    lines.push('', '_Open Work-Sync to view details._');
+    components.push({
+      type: 'button',
+      sub_type: 'url',
+      index: '0',
+      parameters: [{ type: 'text', text: notification.task_id }],
+    });
   }
-  return lines.join('\n');
+
+  return {
+    type: 'template',
+    template: {
+      name: 'worksync_task_notification',
+      language: { code: 'en' },
+      components,
+    },
+  };
 }
 
 Deno.serve(async (req) => {
@@ -149,6 +179,7 @@ Deno.serve(async (req) => {
 
     if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && profile.phone) {
       try {
+        const appUrl = Deno.env.get('APP_URL') || 'https://lemon-pebble-0d1ca2d1e.azurestaticapps.net';
         const credentials = btoa(`${exotelApiKey}:${exotelApiToken}`);
         const waRes = await fetch(
           `https://api.exotel.com/v2/accounts/${exotelAccountSid}/messages`,
@@ -164,13 +195,11 @@ Deno.serve(async (req) => {
                   {
                     from: exotelWhatsAppFrom,
                     to: profile.phone,
-                    content: {
-                      type: 'text',
-                      text: {
-                        preview_url: false,
-                        body: buildWhatsAppMessage(notification),
-                      },
-                    },
+                    content: buildWhatsAppTemplateBody(
+                      notification,
+                      profile.full_name || 'there',
+                      appUrl,
+                    ),
                   },
                 ],
               },
