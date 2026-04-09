@@ -50,10 +50,17 @@ export function TaskDetailPage() {
   const [editingSubtask, setEditingSubtask] = useState<Task | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (isLoading || !task) {
+  if (isLoading) {
+    return <div className="text-center py-12 text-muted-foreground">Loading task...</div>;
+  }
+
+  if (!task) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        {isLoading ? 'Loading task...' : 'Task not found'}
+      <div className="text-center py-12">
+        <p className="text-muted-foreground mb-4">Task not found or you don't have access.</p>
+        <Link to="/tasks" className="text-sm text-primary hover:underline flex items-center justify-center gap-1">
+          <ArrowLeft className="h-4 w-4" /> Back to Tasks
+        </Link>
       </div>
     );
   }

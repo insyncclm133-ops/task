@@ -21,6 +21,8 @@ export function useTaskDetail(taskId: string) {
         .single();
 
       if (taskError) {
+        // PGRST116 = no rows found (404); return null so the UI shows "Task not found"
+        if (taskError.code === 'PGRST116') return null;
         throw taskError;
       }
 
