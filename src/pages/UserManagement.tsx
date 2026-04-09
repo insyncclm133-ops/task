@@ -83,13 +83,14 @@ export function UserManagementPage() {
     setError(null);
 
     try {
-      // Explicitly retrieve the session token — functions.invoke can silently
-      // fall back to the anon key if getSession() fails internally.
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Session expired. Please refresh the page and try again.');
+      // Force a token refresh so the gateway never sees an expired JWT.
+      // getSession() returns the cached token without checking expiry;
+      // refreshSession() always exchanges the refresh_token for a new one.
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshData.session?.access_token) {
+        throw new Error('Session expired. Please log out and log in again.');
       }
-      const authHeaders = { Authorization: `Bearer ${session.access_token}` };
+      const authHeaders = { Authorization: `Bearer ${refreshData.session.access_token}` };
 
       if (editingUser) {
         // Update user
