@@ -1,36 +1,20 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend,
   PieChart, Pie, Cell,
 } from 'recharts';
 import {
-  CheckCircle2, AlertTriangle, Zap, TrendingUp,
-  ListTodo, Trophy, Target, Users, Timer, ArrowUp, Flame, Star,
-  Sparkles, AlertOctagon, Lightbulb,
+  CheckCircle2, AlertTriangle, Zap,
+  ListTodo, Trophy, Target, Users, Timer, ArrowUp, Flame,
+  Sparkles, AlertOctagon, Lightbulb, TrendingUp,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTaskStats } from '@/hooks/useTaskStats';
 import { useAuth } from '@/lib/auth-context';
 import type { AIInsight } from '@/types/task';
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24, scale: 0.98 },
-  visible: { opacity: 1, y: 0, scale: 1 },
-};
-
-const MEMBER_COLORS = [
-  { gradient: 'from-violet-500 to-purple-600', bg: 'from-violet-500/10 to-purple-500/5', ring: 'ring-violet-500/20', text: 'text-violet-600', bar: '#8b5cf6' },
-  { gradient: 'from-sky-500 to-blue-600', bg: 'from-sky-500/10 to-blue-500/5', ring: 'ring-sky-500/20', text: 'text-sky-600', bar: '#0ea5e9' },
-  { gradient: 'from-emerald-500 to-green-600', bg: 'from-emerald-500/10 to-green-500/5', ring: 'ring-emerald-500/20', text: 'text-emerald-600', bar: '#10b981' },
-  { gradient: 'from-amber-500 to-orange-600', bg: 'from-amber-500/10 to-orange-500/5', ring: 'ring-amber-500/20', text: 'text-amber-600', bar: '#f59e0b' },
-  { gradient: 'from-rose-500 to-pink-600', bg: 'from-rose-500/10 to-pink-500/5', ring: 'ring-rose-500/20', text: 'text-rose-600', bar: '#f43f5e' },
-  { gradient: 'from-cyan-500 to-teal-600', bg: 'from-cyan-500/10 to-teal-500/5', ring: 'ring-cyan-500/20', text: 'text-cyan-600', bar: '#06b6d4' },
-  { gradient: 'from-fuchsia-500 to-pink-600', bg: 'from-fuchsia-500/10 to-pink-500/5', ring: 'ring-fuchsia-500/20', text: 'text-fuchsia-600', bar: '#d946ef' },
-  { gradient: 'from-indigo-500 to-blue-600', bg: 'from-indigo-500/10 to-blue-500/5', ring: 'ring-indigo-500/20', text: 'text-indigo-600', bar: '#6366f1' },
-];
 
 const PIE_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280'];
 
@@ -111,14 +95,8 @@ export function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500 bg-clip-text text-transparent">
-              Task
-            </span>{' '}
-            Command Center
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-            <Users className="h-3.5 w-3.5" />
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {isOrgAdmin
               ? `${members.length} team member${members.length !== 1 ? 's' : ''} · ${format(new Date(monthStart), 'MMMM yyyy')}`
               : `My tasks · ${format(new Date(monthStart), 'MMMM yyyy')}`}
@@ -133,80 +111,58 @@ export function DashboardPage() {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto space-y-5">
+      <div className="flex-1 overflow-y-auto space-y-4">
         {/* KPI Row */}
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0, duration: 0.5 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-        >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             label="Total Tasks"
             value={totalTasks}
             icon={ListTodo}
-            gradient="from-sky-500/15 via-blue-500/10 to-cyan-500/5"
-            border="border-sky-500/30"
-            accent="from-sky-500 to-blue-600"
+            iconBg="bg-sky-500/10"
+            iconColor="text-sky-600"
             subtitle={`${stats?.myOpenTasks ?? 0} assigned to you`}
           />
           <KpiCard
             label="Completed"
             value={completedCount}
             icon={CheckCircle2}
-            gradient="from-emerald-500/15 via-green-500/10 to-teal-500/5"
-            border="border-emerald-500/30"
-            accent="from-emerald-500 to-green-600"
+            iconBg="bg-emerald-500/10"
+            iconColor="text-emerald-600"
             subtitle={`${completionRate}% completion rate`}
           />
           <KpiCard
             label="In Progress"
             value={inProgressCount}
             icon={Zap}
-            gradient="from-amber-500/15 via-orange-500/10 to-yellow-500/5"
-            border="border-amber-500/30"
-            accent="from-amber-500 to-orange-600"
+            iconBg="bg-amber-500/10"
+            iconColor="text-amber-600"
             subtitle="Currently active"
           />
           <KpiCard
             label="Overdue"
             value={overdue}
             icon={AlertTriangle}
-            gradient={
-              overdue > 0
-                ? 'from-red-500/15 via-rose-500/10 to-pink-500/5'
-                : 'from-emerald-500/15 via-green-500/10 to-teal-500/5'
-            }
-            border={overdue > 0 ? 'border-red-500/30' : 'border-emerald-500/30'}
-            accent={
-              overdue > 0
-                ? 'from-red-500 to-rose-600'
-                : 'from-emerald-500 to-green-600'
-            }
-            subtitle={overdue > 0 ? 'Needs attention' : 'All on track!'}
+            iconBg={overdue > 0 ? 'bg-red-500/10' : 'bg-emerald-500/10'}
+            iconColor={overdue > 0 ? 'text-red-600' : 'text-emerald-600'}
+            subtitle={overdue > 0 ? 'Needs attention' : 'All on track'}
           />
-        </motion.div>
+        </div>
 
         {/* AI Insights */}
         {stats?.aiInsights && stats.aiInsights.length > 0 && (
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            transition={{ delay: 0.05, duration: 0.5 }}
-          >
-            <div className="dashboard-card group">
-              <div className="dashboard-card-accent bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 animate-gradient-shift" />
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-                  <Sparkles className="h-3.5 w-3.5 text-white" />
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <Sparkles className="h-3.5 w-3.5 text-violet-600" />
                 </div>
-                <h2 className="font-bold text-sm">AI Insights</h2>
-                <span className="ml-auto text-[10px] font-semibold text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-300 px-2 py-0.5 rounded-full">
+                AI Insights
+                <span className="ml-auto text-[10px] font-semibold text-violet-600 bg-violet-500/10 px-2 py-0.5 rounded-full">
                   {stats.aiInsights.length}
                 </span>
-              </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                 {stats.aiInsights.map((insight, i) => {
                   const style = INSIGHT_STYLES[insight.type];
@@ -214,7 +170,7 @@ export function DashboardPage() {
                   return (
                     <div
                       key={i}
-                      className={`border-l-3 ${style.border} ${style.bg} rounded-r-lg px-3 py-2`}
+                      className={`border-l-2 ${style.border} ${style.bg} rounded-r-lg px-3 py-2`}
                     >
                       <div className="flex items-start gap-2">
                         <Icon className={`h-4 w-4 ${style.iconColor} shrink-0 mt-0.5`} />
@@ -222,9 +178,7 @@ export function DashboardPage() {
                           <p className={`font-semibold text-xs ${style.text} leading-tight`}>
                             {insight.title}
                           </p>
-                          <p
-                            className={`text-[11px] mt-0.5 ${style.text} opacity-70 leading-snug line-clamp-2`}
-                          >
+                          <p className={`text-[11px] mt-0.5 ${style.text} opacity-70 leading-snug line-clamp-2`}>
                             {insight.description}
                           </p>
                         </div>
@@ -233,428 +187,321 @@ export function DashboardPage() {
                   );
                 })}
               </div>
-            </div>
-          </motion.div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Charts Row: Member Performance + Status Pie */}
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.1, duration: 0.5 }}
-          className={`grid grid-cols-1 ${isOrgAdmin ? 'lg:grid-cols-3' : ''} gap-4`}
-        >
+        <div className={`grid grid-cols-1 ${isOrgAdmin ? 'lg:grid-cols-3' : ''} gap-4`}>
           {/* Member Performance Bar Chart — admin only */}
-          {isOrgAdmin && <div className="lg:col-span-2 dashboard-card group">
-            <div className="dashboard-card-accent bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 animate-gradient-shift" />
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-md">
-                  <Target className="h-4 w-4 text-white" />
+          {isOrgAdmin && (
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                    <Target className="h-3.5 w-3.5 text-violet-600" />
+                  </div>
+                  Member Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {memberChartData.length === 0 ? (
+                  <div className="flex items-center justify-center h-[260px] text-muted-foreground">
+                    <div className="text-center">
+                      <Users className="mx-auto mb-2 h-8 w-8 opacity-30" />
+                      <p className="text-sm">No data yet</p>
+                    </div>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={memberChartData} barCategoryGap="20%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: 12,
+                          border: '1px solid hsl(220,13%,91%)',
+                          fontSize: 12,
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                        }}
+                      />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                      <Bar dataKey="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="In Progress" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="Pending" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="Overdue" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Status Pie */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                 </div>
-                Member Performance
-              </h2>
-            </div>
-            {memberChartData.length === 0 ? (
-              <div className="flex items-center justify-center h-[260px] text-muted-foreground">
-                <div className="text-center">
-                  <Users className="mx-auto mb-2 h-8 w-8 opacity-30" />
-                  <p className="text-sm">No data yet</p>
+                Status Split
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {statusPieData.length === 0 ? (
+                <div className="flex items-center justify-center h-[260px] text-muted-foreground">
+                  <p className="text-sm">No data</p>
                 </div>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={memberChartData} barCategoryGap="20%">
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="hsl(220,13%,91%)"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 12 }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    allowDecimals={false}
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
+              ) : (
+                <div className="flex flex-col items-center">
+                  <ResponsiveContainer width="100%" height={180}>
+                    <PieChart>
+                      <Pie
+                        data={statusPieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={75}
+                        dataKey="value"
+                        stroke="none"
+                        startAngle={90}
+                        endAngle={-270}
+                      >
+                        {statusPieData.map((_, i) => (
+                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <text
+                        x="50%"
+                        y="50%"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="fill-foreground text-2xl font-bold"
+                      >
+                        {completionRate}%
+                      </text>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-wrap justify-center gap-3 mt-2">
+                    {statusPieData.map((d, i) => (
+                      <div key={d.name} className="flex items-center gap-1.5 text-[11px]">
+                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
+                        <span className="text-muted-foreground">{d.name}</span>
+                        <span className="font-semibold">{d.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Weekly Trend */}
+        {stats?.weeklyTrend && stats.weeklyTrend.some((w) => w.created > 0 || w.completed > 0) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-3.5 w-3.5 text-indigo-600" />
+                </div>
+                Weekly Trend
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={stats.weeklyTrend} barCategoryGap="30%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" vertical={false} />
+                  <XAxis dataKey="week" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                   <Tooltip
                     contentStyle={{
                       borderRadius: 12,
                       border: '1px solid hsl(220,13%,91%)',
                       fontSize: 12,
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                   />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-                  />
-                  <Bar dataKey="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="In Progress" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Pending" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Overdue" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="created" name="Created" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="completed" name="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            )}
-          </div>}
-
-          {/* Status Pie */}
-          <div className="dashboard-card group">
-            <div className="dashboard-card-accent bg-gradient-to-r from-emerald-500 via-cyan-400 to-sky-500 animate-gradient-shift" />
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-md">
-                  <CheckCircle2 className="h-4 w-4 text-white" />
-                </div>
-                Status Split
-              </h2>
-            </div>
-            {statusPieData.length === 0 ? (
-              <div className="flex items-center justify-center h-[260px] text-muted-foreground">
-                <p className="text-sm">No data</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <ResponsiveContainer width="100%" height={180}>
-                  <PieChart>
-                    <Pie
-                      data={statusPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={75}
-                      dataKey="value"
-                      stroke="none"
-                      startAngle={90}
-                      endAngle={-270}
-                    >
-                      {statusPieData.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <text
-                      x="50%"
-                      y="50%"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="fill-foreground text-2xl font-bold"
-                    >
-                      {completionRate}%
-                    </text>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex flex-wrap justify-center gap-3 mt-2">
-                  {statusPieData.map((d, i) => (
-                    <div key={d.name} className="flex items-center gap-1.5 text-[11px]">
-                      <div
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: PIE_COLORS[i] }}
-                      />
-                      <span className="text-muted-foreground">{d.name}</span>
-                      <span className="font-semibold">{d.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Weekly Trend */}
-        {stats?.weeklyTrend &&
-          stats.weeklyTrend.some((w) => w.created > 0 || w.completed > 0) && (
-            <motion.div
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              <div className="dashboard-card group">
-                <div className="dashboard-card-accent bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 animate-gradient-shift" />
-                <h2 className="text-base font-bold flex items-center gap-2 mb-4">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md">
-                    <TrendingUp className="h-4 w-4 text-white" />
-                  </div>
-                  Weekly Trend
-                </h2>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={stats.weeklyTrend} barCategoryGap="30%">
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="hsl(220,13%,91%)"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="week"
-                      tick={{ fontSize: 12 }}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      allowDecimals={false}
-                      tick={{ fontSize: 11 }}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: 12,
-                        border: '1px solid hsl(220,13%,91%)',
-                        fontSize: 12,
-                      }}
-                    />
-                    <Legend
-                      iconType="circle"
-                      iconSize={8}
-                      wrapperStyle={{ fontSize: 11 }}
-                    />
-                    <Bar
-                      dataKey="created"
-                      name="Created"
-                      fill="#8b5cf6"
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="completed"
-                      name="Completed"
-                      fill="#10b981"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-          )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Top Performer + Team Leaderboard — admin only */}
-        {isOrgAdmin && <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-4"
-        >
-          {/* Top Performer Spotlight */}
-          {topPerformer && topPerformer.completed > 0 && (
-            <div className="relative overflow-hidden rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-fuchsia-500/5 p-6">
-              <div
-                className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-400 via-purple-500 to-fuchsia-500 animate-gradient-shift"
-                style={{ backgroundSize: '200% 200%' }}
-              />
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center shadow-lg">
-                  <Trophy className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                    Top Performer
-                  </p>
-                  <p className="text-xl font-extrabold">{topPerformer.userName}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center p-2 rounded-xl bg-white/50 dark:bg-white/5">
-                  <p className="text-2xl font-extrabold text-emerald-600">
-                    {topPerformer.completed}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-medium">Done</p>
-                </div>
-                <div className="text-center p-2 rounded-xl bg-white/50 dark:bg-white/5">
-                  <p className="text-2xl font-extrabold text-sky-600">
-                    {topPerformer.onTime}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-medium">On Time</p>
-                </div>
-                <div className="text-center p-2 rounded-xl bg-white/50 dark:bg-white/5">
-                  <p className="text-2xl font-extrabold text-violet-600">
-                    {topPerformer.avgCompletionDays ?? '-'}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-medium">Avg Days</p>
-                </div>
-              </div>
-              <div className="absolute bottom-0 right-0 opacity-[0.06]">
-                <Star className="h-28 w-28 -mb-6 -mr-6" />
-              </div>
-            </div>
-          )}
-
-          {/* Team Leaderboard */}
-          <div
-            className={`${topPerformer && topPerformer.completed > 0 ? 'lg:col-span-2' : 'lg:col-span-3'} dashboard-card group`}
-          >
-            <div className="dashboard-card-accent bg-gradient-to-r from-violet-400 via-purple-500 to-fuchsia-500 animate-gradient-shift" />
-            <h2 className="text-base font-bold flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center shadow-md">
-                <Flame className="h-4 w-4 text-white" />
-              </div>
-              Team Leaderboard
-            </h2>
-            {members.length === 0 ? (
-              <div className="flex items-center justify-center py-8 text-muted-foreground">
-                <p className="text-sm">No members yet</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {members.map((member, idx) => {
-                  const color = MEMBER_COLORS[idx % MEMBER_COLORS.length];
-                  const pct =
-                    member.total > 0
-                      ? Math.round((member.completed / member.total) * 100)
-                      : 0;
-                  return (
-                    <div
-                      key={member.userId}
-                      className={`flex items-center justify-between p-3 rounded-xl bg-gradient-to-r ${color.bg} border ${color.ring} hover:scale-[1.01] transition-all`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-8 h-8 rounded-full bg-gradient-to-br ${color.gradient} flex items-center justify-center text-white text-xs font-bold shadow-md`}
-                        >
-                          {idx + 1}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">{member.userName}</p>
-                          <p className="text-[10px] text-muted-foreground">{pct}% done</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap justify-end">
-                        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-0 text-[10px] ring-1 ring-emerald-500/20">
-                          {member.completed} done
-                        </Badge>
-                        {member.overdue > 0 && (
-                          <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-0 text-[10px] ring-1 ring-red-500/20">
-                            {member.overdue} overdue
-                          </Badge>
-                        )}
-                        {member.avgCompletionDays != null && (
-                          <Badge variant="outline" className="text-[10px]">
-                            <Timer className="h-3 w-3 mr-0.5" />
-                            {member.avgCompletionDays}d avg
-                          </Badge>
-                        )}
-                      </div>
+        {isOrgAdmin && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Top Performer Spotlight */}
+            {topPerformer && topPerformer.completed > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                      <Trophy className="h-3.5 w-3.5 text-amber-600" />
                     </div>
-                  );
-                })}
-              </div>
+                    Top Performer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-base font-bold text-foreground mb-4">{topPerformer.userName}</p>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="p-2 rounded-xl bg-muted/50">
+                      <p className="text-xl font-bold text-emerald-600">{topPerformer.completed}</p>
+                      <p className="text-[10px] text-muted-foreground">Done</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-muted/50">
+                      <p className="text-xl font-bold text-sky-600">{topPerformer.onTime}</p>
+                      <p className="text-[10px] text-muted-foreground">On Time</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-muted/50">
+                      <p className="text-xl font-bold text-foreground">{topPerformer.avgCompletionDays ?? '-'}</p>
+                      <p className="text-[10px] text-muted-foreground">Avg Days</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
+
+            {/* Team Leaderboard */}
+            <Card className={topPerformer && topPerformer.completed > 0 ? 'lg:col-span-2' : 'lg:col-span-3'}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                    <Flame className="h-3.5 w-3.5 text-orange-600" />
+                  </div>
+                  Team Leaderboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {members.length === 0 ? (
+                  <div className="flex items-center justify-center py-8 text-muted-foreground">
+                    <p className="text-sm">No members yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {members.map((member, idx) => {
+                      const pct = member.total > 0 ? Math.round((member.completed / member.total) * 100) : 0;
+                      return (
+                        <div
+                          key={member.userId}
+                          className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="w-5 text-xs font-semibold text-muted-foreground text-center">{idx + 1}</span>
+                            <div>
+                              <p className="text-sm font-medium">{member.userName}</p>
+                              <p className="text-[10px] text-muted-foreground">{pct}% complete</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                            <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-0">
+                              {member.completed} done
+                            </Badge>
+                            {member.overdue > 0 && (
+                              <Badge variant="secondary" className="text-[10px] bg-red-500/10 text-red-700 dark:text-red-400 border-0">
+                                {member.overdue} overdue
+                              </Badge>
+                            )}
+                            {member.avgCompletionDays != null && (
+                              <Badge variant="outline" className="text-[10px]">
+                                <Timer className="h-3 w-3 mr-0.5" />
+                                {member.avgCompletionDays}d avg
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </motion.div>}
+        )}
 
         {/* Individual Member Breakdown Cards — admin only */}
         {isOrgAdmin && members.length > 0 && (
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-              <Users className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+              <Users className="h-4 w-4" />
               Individual Breakdown
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {members.map((member, idx) => {
-                const color = MEMBER_COLORS[idx % MEMBER_COLORS.length];
-                const pct =
-                  member.total > 0
-                    ? Math.round((member.completed / member.total) * 100)
-                    : 0;
-                const onTimePct =
-                  member.completed > 0
-                    ? Math.round((member.onTime / member.completed) * 100)
-                    : 0;
+              {members.map((member) => {
+                const pct = member.total > 0 ? Math.round((member.completed / member.total) * 100) : 0;
+                const onTimePct = member.completed > 0 ? Math.round((member.onTime / member.completed) * 100) : 0;
                 return (
-                  <div
-                    key={member.userId}
-                    className={`relative overflow-hidden rounded-2xl border ${color.ring} bg-gradient-to-br ${color.bg} p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}
-                  >
-                    <div
-                      className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${color.gradient}`}
-                    />
+                  <Card key={member.userId}>
+                    <CardContent className="p-5">
+                      {/* Member Header */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center font-bold text-sm text-foreground">
+                          {member.userName?.charAt(0) || '?'}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">{member.userName}</p>
+                          <p className="text-[10px] text-muted-foreground">{member.total} total tasks</p>
+                        </div>
+                      </div>
 
-                    {/* Member Header */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div
-                        className={`h-10 w-10 rounded-xl bg-gradient-to-br ${color.gradient} flex items-center justify-center text-white font-bold shadow-md`}
-                      >
-                        {member.userName?.charAt(0) || '?'}
+                      {/* Completion Progress */}
+                      <div className="mb-4">
+                        <div className="flex justify-between text-[11px] mb-1.5">
+                          <span className="text-muted-foreground">Completion</span>
+                          <span className="font-semibold">{pct}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all duration-700"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-sm">{member.userName}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {member.total} total tasks
-                        </p>
-                      </div>
-                    </div>
 
-                    {/* Completion Progress */}
-                    <div className="mb-3">
-                      <div className="flex justify-between text-[11px] mb-1">
-                        <span className="text-muted-foreground">Completion</span>
-                        <span className="font-semibold">{pct}%</span>
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="p-1.5 rounded-lg bg-muted/50">
+                          <p className="text-base font-bold text-emerald-600">{member.completed}</p>
+                          <p className="text-[9px] text-muted-foreground">Done</p>
+                        </div>
+                        <div className="p-1.5 rounded-lg bg-muted/50">
+                          <p className="text-base font-bold text-blue-600">{member.inProgress}</p>
+                          <p className="text-[9px] text-muted-foreground">Active</p>
+                        </div>
+                        <div className="p-1.5 rounded-lg bg-muted/50">
+                          <p className={`text-base font-bold ${member.overdue > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                            {member.overdue}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground">Overdue</p>
+                        </div>
                       </div>
-                      <div className="h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full bg-gradient-to-r ${color.gradient} transition-all duration-700`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-1.5 rounded-lg bg-white/50 dark:bg-white/5">
-                        <p className={`text-lg font-extrabold ${color.text}`}>
-                          {member.completed}
-                        </p>
-                        <p className="text-[9px] text-muted-foreground">Done</p>
-                      </div>
-                      <div className="p-1.5 rounded-lg bg-white/50 dark:bg-white/5">
-                        <p className="text-lg font-extrabold text-blue-600">
-                          {member.inProgress}
-                        </p>
-                        <p className="text-[9px] text-muted-foreground">Active</p>
-                      </div>
-                      <div className="p-1.5 rounded-lg bg-white/50 dark:bg-white/5">
-                        <p
-                          className={`text-lg font-extrabold ${member.overdue > 0 ? 'text-red-600' : 'text-emerald-600'}`}
-                        >
-                          {member.overdue}
-                        </p>
-                        <p className="text-[9px] text-muted-foreground">Overdue</p>
-                      </div>
-                    </div>
-
-                    {/* Bottom Stats */}
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50 text-[10px] text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <ArrowUp className="h-3 w-3 text-emerald-500" />
-                        {onTimePct}% on-time
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Timer className="h-3 w-3" />
-                        {member.avgCompletionDays ?? '-'}d avg
-                      </span>
-                      {member.highPriority > 0 && (
-                        <span className="flex items-center gap-1 text-orange-600 font-medium">
-                          <Flame className="h-3 w-3" />
-                          {member.highPriority} critical
+                      {/* Bottom Stats */}
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <ArrowUp className="h-3 w-3 text-emerald-500" />
+                          {onTimePct}% on-time
                         </span>
-                      )}
-                    </div>
-                  </div>
+                        <span className="flex items-center gap-1">
+                          <Timer className="h-3 w-3" />
+                          {member.avgCompletionDays ?? '-'}d avg
+                        </span>
+                        {member.highPriority > 0 && (
+                          <span className="flex items-center gap-1 text-orange-600 font-medium">
+                            <Flame className="h-3 w-3" />
+                            {member.highPriority} critical
+                          </span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
     </div>
@@ -666,34 +513,29 @@ function KpiCard({
   label,
   value,
   icon: Icon,
-  gradient,
-  border,
-  accent,
+  iconBg,
+  iconColor,
   subtitle,
 }: {
   label: string;
   value: number;
   icon: React.ElementType;
-  gradient: string;
-  border: string;
-  accent: string;
+  iconBg: string;
+  iconColor: string;
   subtitle: string;
 }) {
   return (
-    <div
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} border ${border} p-5 hover:shadow-xl hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 animate-shimmer`}
-    >
-      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accent}`} />
-      <div className="flex items-center gap-1.5 mb-2">
-        <div className={`p-1.5 rounded-lg bg-gradient-to-br ${accent} shadow-md`}>
-          <Icon className="h-4 w-4 text-white" />
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`h-9 w-9 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
+            <Icon className={`h-4.5 w-4.5 ${iconColor}`} />
+          </div>
+          <span className="text-xs font-medium text-muted-foreground">{label}</span>
         </div>
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </span>
-      </div>
-      <p className="text-3xl font-extrabold">{value.toLocaleString()}</p>
-      <p className="text-[11px] text-muted-foreground mt-1">{subtitle}</p>
-    </div>
+        <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+        <p className="text-[11px] text-muted-foreground mt-1">{subtitle}</p>
+      </CardContent>
+    </Card>
   );
 }
