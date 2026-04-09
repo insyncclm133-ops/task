@@ -104,12 +104,14 @@ export function UserManagementPage() {
         const { error: invokeError } = await supabase.functions.invoke('manage-user', {
           method: 'PUT',
           body: {
+            action: 'update-user',
             user_id: editingUser.user_id,
             first_name: formData.first_name,
             last_name: formData.last_name,
             phone: formData.phone,
             role: formData.role,
             designation_id: formData.designation_id || null,
+            department: formData.department || null,
           },
         });
 
@@ -119,6 +121,7 @@ export function UserManagementPage() {
         const { error: invokeError } = await supabase.functions.invoke('manage-user', {
           method: 'POST',
           body: {
+            action: 'create-user',
             email: formData.email,
             password: formData.password,
             first_name: formData.first_name,
@@ -126,6 +129,7 @@ export function UserManagementPage() {
             phone: formData.phone,
             role: formData.role,
             designation_id: formData.designation_id || null,
+            department: formData.department || null,
           },
         });
 
@@ -202,6 +206,7 @@ export function UserManagementPage() {
                 <th className="text-left px-4 py-3 font-medium">Name</th>
                 <th className="text-left px-4 py-3 font-medium">Email</th>
                 <th className="text-left px-4 py-3 font-medium">Phone</th>
+                <th className="text-left px-4 py-3 font-medium">Department</th>
                 <th className="text-left px-4 py-3 font-medium">Role</th>
                 <th className="text-left px-4 py-3 font-medium">Designation</th>
                 <th className="text-left px-4 py-3 font-medium">Status</th>
@@ -211,7 +216,7 @@ export function UserManagementPage() {
             <tbody>
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdminUser ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                  <td colSpan={isAdminUser ? 8 : 7} className="text-center py-8 text-muted-foreground">
                     No users found.
                   </td>
                 </tr>
@@ -221,6 +226,7 @@ export function UserManagementPage() {
                     <td className="px-4 py-3 font-medium">{ur.profiles?.full_name || 'N/A'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{ur.profiles?.email || 'N/A'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{ur.profiles?.phone || '-'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{ur.profiles?.department || '-'}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(ur.role)}`}
@@ -294,6 +300,7 @@ interface UserFormData {
   first_name: string;
   last_name: string;
   phone: string;
+  department: string;
   role: AppRole;
   designation_id: string;
 }
@@ -317,6 +324,7 @@ function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmit
     first_name: '',
     last_name: '',
     phone: '',
+    department: '',
     role: 'sales_agent',
     designation_id: '',
   });
@@ -329,6 +337,7 @@ function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmit
         first_name: user.profiles.first_name || '',
         last_name: user.profiles.last_name || '',
         phone: user.profiles.phone || '',
+        department: user.profiles.department || '',
         role: user.role,
         designation_id: user.profiles.designation_id || '',
       });
@@ -339,6 +348,7 @@ function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmit
         first_name: '',
         last_name: '',
         phone: '',
+        department: '',
         role: 'sales_agent',
         designation_id: '',
       });
@@ -437,6 +447,18 @@ function UserDialog({ open, onOpenChange, user, designations, onSubmit, isSubmit
               onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
               className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="919876543210"
+            />
+          </div>
+
+          {/* Department */}
+          <div>
+            <label className="text-sm font-medium">Department</label>
+            <input
+              type="text"
+              value={formData.department}
+              onChange={(e) => setFormData((p) => ({ ...p, department: e.target.value }))}
+              className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="e.g., Sales, Operations, Engineering"
             />
           </div>
 

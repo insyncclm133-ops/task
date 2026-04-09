@@ -137,11 +137,11 @@ function computeAIInsights(
   return insights;
 }
 
-export function useTaskStats(startDate?: string, endDate?: string) {
+export function useTaskStats(startDate?: string, endDate?: string, isAdmin = true, userId = '') {
   const { user } = useAuth();
 
   const { data: stats, isLoading } = useQuery<TaskStats>({
-    queryKey: ['task-stats', user?.id, startDate, endDate],
+    queryKey: ['task-stats', user?.id, startDate, endDate, isAdmin],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
@@ -149,11 +149,18 @@ export function useTaskStats(startDate?: string, endDate?: string) {
       const { data: allTasks, error } = await supabase
         .from('tasks')
         .select(
-          'id, status, priority, assigned_to, due_date, created_at, completed_at, closed_at, assigned_user:profiles!tasks_assigned_to_fkey(full_name)',
+          'id, status, priority, assigned_to, assigned_by, due_date, created_at, completed_at, closed_at, assigned_user:profiles!tasks_assigned_to_fkey(full_name)',
         );
 
       if (error) throw error;
-      const rawTasks = allTasks ?? [];
+
+      // For non-admin users, restrict to tasks they are assigned to or created
+      const effectiveUserId = userId || user.id;
+      const rawTasks = isAdmin
+        ? (allTasks ?? [])
+        : (allTasks ?? []).filter(
+            (t) => t.assigned_to === effectiveUserId || t.assigned_by === effectiveUserId,
+          );
       const now = new Date();
 
       // Filter tasks by date range if provided

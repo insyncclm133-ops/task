@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'create-user': {
-        const { email, password, full_name, first_name, last_name, phone, org_id, role, designation_id } = body;
+        const { email, password, full_name, first_name, last_name, phone, org_id, role, designation_id, department } = body;
 
         if (!email || !phone) {
           return new Response(JSON.stringify({ error: 'Email and phone number are required' }), {
@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
             phone: phone || null,
             org_id: org_id || null,
             designation_id: designation_id || null,
+            department: department || null,
             is_active: true,
           })
           .eq('id', newUser.user.id);
@@ -122,7 +123,7 @@ Deno.serve(async (req) => {
       }
 
       case 'update-user': {
-        const { user_id, email, password, full_name, first_name, last_name, phone, org_id, role, designation_id, is_active } = body;
+        const { user_id, email, password, full_name, first_name, last_name, phone, org_id, role, designation_id, department, is_active } = body;
 
         // Update auth user if email or password changed
         const authUpdates: Record<string, unknown> = {};
@@ -147,6 +148,7 @@ Deno.serve(async (req) => {
         if (phone !== undefined) profileUpdates.phone = phone || null;
         if (org_id !== undefined) profileUpdates.org_id = org_id || null;
         if (designation_id !== undefined) profileUpdates.designation_id = designation_id || null;
+        if (department !== undefined) profileUpdates.department = department || null;
         if (is_active !== undefined) profileUpdates.is_active = is_active;
 
         if (Object.keys(profileUpdates).length > 0) {

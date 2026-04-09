@@ -28,6 +28,7 @@ export interface UserProfile {
   avatar_url: string | null;
   org_id: string | null;
   designation_id: string | null;
+  department: string | null;
   is_platform_admin: boolean;
   is_active: boolean;
   onboarding_completed: boolean;

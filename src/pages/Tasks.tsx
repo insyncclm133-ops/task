@@ -13,7 +13,6 @@ import { TaskCard } from '@/components/tasks/TaskCard';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { SubtaskDialog } from '@/components/tasks/SubtaskDialog';
-import { StartTaskDialog } from '@/components/tasks/StartTaskDialog';
 import { CompleteTaskDialog } from '@/components/tasks/CompleteTaskDialog';
 import { CloseTaskDialog } from '@/components/tasks/CloseTaskDialog';
 import { RestartTaskDialog } from '@/components/tasks/RestartTaskDialog';
@@ -41,7 +40,6 @@ export function TasksPage() {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [subtaskParent, setSubtaskParent] = useState<Task | null>(null);
-  const [startingTask, setStartingTask] = useState<Task | null>(null);
   const [completingTask, setCompletingTask] = useState<Task | null>(null);
   const [closingTask, setClosingTask] = useState<Task | null>(null);
   const [restartingTask, setRestartingTask] = useState<Task | null>(null);
@@ -79,18 +77,7 @@ export function TasksPage() {
   };
 
   const handleStartTask = (task: Task) => {
-    setStartingTask(task);
-  };
-
-  const handleStartConfirm = async (files: File[]) => {
-    if (!startingTask) return;
-    setIsSubmitting(true);
-    try {
-      await startTask.mutateAsync({ taskId: startingTask.id, files });
-      setStartingTask(null);
-    } finally {
-      setIsSubmitting(false);
-    }
+    startTask.mutate({ taskId: task.id, files: [] });
   };
 
   const handleCompleteTask = async (notes: string, files: File[]) => {
@@ -291,16 +278,6 @@ export function TasksPage() {
           parentTask={subtaskParent}
           profiles={profiles}
           onSubmit={handleCreateSubtask}
-          isSubmitting={isSubmitting}
-        />
-      )}
-
-      {startingTask && (
-        <StartTaskDialog
-          open={!!startingTask}
-          onOpenChange={(open) => { if (!open) setStartingTask(null); }}
-          task={startingTask}
-          onSubmit={handleStartConfirm}
           isSubmitting={isSubmitting}
         />
       )}

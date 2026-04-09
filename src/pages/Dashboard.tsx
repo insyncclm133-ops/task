@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useTaskStats } from '@/hooks/useTaskStats';
+import { useAuth } from '@/lib/auth-context';
 import type { AIInsight } from '@/types/task';
 
 const fadeUp = {
@@ -52,7 +53,9 @@ export function DashboardPage() {
   const [monthStart, setMonthStart] = useState(format(startOfMonth(now), 'yyyy-MM-dd'));
   const [monthEnd, setMonthEnd] = useState(format(endOfMonth(now), 'yyyy-MM-dd'));
 
-  const { stats, isLoading } = useTaskStats(monthStart, monthEnd);
+  const { isAdmin, isPlatformAdmin, user } = useAuth();
+  const isOrgAdmin = isAdmin || isPlatformAdmin;
+  const { stats, isLoading } = useTaskStats(monthStart, monthEnd, isOrgAdmin, user?.id ?? '');
 
   const members = stats?.userCompletionStats ?? [];
   const totalTasks = stats?.totalTasks ?? 0;
@@ -116,8 +119,9 @@ export function DashboardPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
             <Users className="h-3.5 w-3.5" />
-            {members.length} team member{members.length !== 1 ? 's' : ''} &middot;{' '}
-            {format(new Date(monthStart), 'MMMM yyyy')}
+            {isOrgAdmin
+              ? `${members.length} team member${members.length !== 1 ? 's' : ''} · ${format(new Date(monthStart), 'MMMM yyyy')}`
+              : `My tasks · ${format(new Date(monthStart), 'MMMM yyyy')}`}
           </p>
         </div>
         <Input
@@ -239,10 +243,10 @@ export function DashboardPage() {
           initial="hidden"
           animate="visible"
           transition={{ delay: 0.1, duration: 0.5 }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+          className={`grid grid-cols-1 ${isOrgAdmin ? 'lg:grid-cols-3' : ''} gap-4`}
         >
-          {/* Member Performance Bar Chart */}
-          <div className="lg:col-span-2 dashboard-card group">
+          {/* Member Performance Bar Chart — admin only */}
+          {isOrgAdmin && <div className="lg:col-span-2 dashboard-card group">
             <div className="dashboard-card-accent bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 animate-gradient-shift" />
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold flex items-center gap-2">
@@ -299,7 +303,7 @@ export function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             )}
-          </div>
+          </div>}
 
           {/* Status Pie */}
           <div className="dashboard-card group">
@@ -429,8 +433,8 @@ export function DashboardPage() {
             </motion.div>
           )}
 
-        {/* Top Performer + Team Leaderboard */}
-        <motion.div
+        {/* Top Performer + Team Leaderboard — admin only */}
+        {isOrgAdmin && <motion.div
           variants={fadeUp}
           initial="hidden"
           animate="visible"
@@ -542,10 +546,10 @@ export function DashboardPage() {
               </div>
             )}
           </div>
-        </motion.div>
+        </motion.div>}
 
-        {/* Individual Member Breakdown Cards */}
-        {members.length > 0 && (
+        {/* Individual Member Breakdown Cards — admin only */}
+        {isOrgAdmin && members.length > 0 && (
           <motion.div
             variants={fadeUp}
             initial="hidden"
