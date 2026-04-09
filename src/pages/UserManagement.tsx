@@ -90,6 +90,7 @@ export function UserManagementPage() {
           body: {
             action: 'update-user',
             user_id: editingUser.user_id,
+            email: formData.email || undefined,
             first_name: formData.first_name,
             last_name: formData.last_name,
             phone: formData.phone,
@@ -353,20 +354,21 @@ function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }:
             </div>
           )}
 
-          {/* Email (only for create) */}
-          {!isEditing && (
-            <div>
-              <label className="text-sm font-medium">Email *</label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="user@example.com"
-              />
-            </div>
-          )}
+          {/* Email */}
+          <div>
+            <label className="text-sm font-medium">Email {!isEditing && '*'}</label>
+            <input
+              type="email"
+              required={!isEditing}
+              value={formData.email}
+              onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+              className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="user@example.com"
+            />
+            {isEditing && (
+              <p className="mt-1 text-xs text-muted-foreground">Leave unchanged to keep current email.</p>
+            )}
+          </div>
 
           {/* Password (only for create) */}
           {!isEditing && (
