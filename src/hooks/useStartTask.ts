@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 export function useStartTask() {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, orgId } = useAuth();
 
   return useMutation({
     mutationFn: async ({ taskId, files }: { taskId: string; files: File[] }) => {
@@ -26,6 +26,7 @@ export function useStartTask() {
             file_type: file.type,
             attachment_type: 'reference',
             uploaded_by: user!.id,
+            org_id: orgId,
           });
         if (attachError) throw attachError;
       }

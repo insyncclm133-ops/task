@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 
 export function useTaskDetail(taskId: string) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, orgId } = useAuth();
 
   const { data: task, isLoading } = useQuery<Task | null>({
     queryKey: ['task', taskId],
@@ -116,6 +116,7 @@ export function useTaskDetail(taskId: string) {
           file_type: f.file_type,
           attachment_type: 'completion' as const,
           uploaded_by: user!.id,
+          org_id: orgId,
         }));
 
         const { error: attachError } = await supabase

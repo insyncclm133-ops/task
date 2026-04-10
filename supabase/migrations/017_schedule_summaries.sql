@@ -4,6 +4,9 @@
 -- Monthly: 1st of each month at 8:00 AM IST (02:30 UTC)
 -- ============================================================
 
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
 SELECT cron.schedule(
   'weekly-summary',
   '30 2 * * 1',

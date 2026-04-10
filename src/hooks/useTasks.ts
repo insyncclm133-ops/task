@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 
 export function useTasks(filters: TaskFilters) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, orgId } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ['tasks', filters],
@@ -105,6 +105,7 @@ export function useTasks(filters: TaskFilters) {
         .insert({
           ...input,
           assigned_by: user?.id,
+          org_id: orgId,
         })
         .select()
         .single();
