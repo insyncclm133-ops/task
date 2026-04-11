@@ -1,541 +1,594 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { animate, motion } from 'framer-motion';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip,
   PieChart, Pie, Cell,
 } from 'recharts';
 import {
-  CheckCircle2, AlertTriangle, Zap,
-  ListTodo, Trophy, Target, Users, Timer, ArrowUp, Flame,
-  Sparkles, AlertOctagon, Lightbulb, TrendingUp,
+  CheckCircle2, AlertTriangle, Zap, ListTodo,
+  Flame, Target, Users,
+  AlertOctagon, Lightbulb, TrendingUp, Activity,
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTaskStats } from '@/hooks/useTaskStats';
 import { useAuth } from '@/lib/auth-context';
 import type { AIInsight } from '@/types/task';
 
-const PIE_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280'];
-
-const INSIGHT_STYLES: Record<AIInsight['type'], { border: string; bg: string; text: string; iconColor: string }> = {
-  critical: { border: 'border-l-red-500', bg: 'bg-red-50 dark:bg-red-950/30', text: 'text-red-800 dark:text-red-300', iconColor: 'text-red-500' },
-  warning: { border: 'border-l-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-800 dark:text-amber-300', iconColor: 'text-amber-500' },
-  success: { border: 'border-l-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-800 dark:text-emerald-300', iconColor: 'text-emerald-500' },
-  info: { border: 'border-l-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30', text: 'text-blue-800 dark:text-blue-300', iconColor: 'text-blue-500' },
+/* ── Design tokens ─────────────────────────────────────────────────── */
+const N = {
+  cyan:    '#00d4ff',
+  emerald: '#00ff88',
+  amber:   '#ffaa00',
+  red:     '#ff3366',
+  purple:  '#a855f7',
+  blue:    '#3b82f6',
 };
 
-const INSIGHT_ICONS: Record<AIInsight['type'], typeof AlertOctagon> = {
-  critical: AlertOctagon,
-  warning: AlertTriangle,
-  success: TrendingUp,
-  info: Lightbulb,
+const PIE_COLORS = [N.emerald, N.blue, N.amber, N.red, '#6b7280'];
+
+const GLASS: React.CSSProperties = {
+  background: 'linear-gradient(135deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.02) 100%)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  backdropFilter: 'blur(16px)',
 };
 
+const CHART_AXIS  = { fill: 'rgba(255,255,255,0.3)', fontSize: 11 };
+const CHART_TIP: React.CSSProperties = {
+  background: 'rgba(8,8,18,0.97)',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 10,
+  fontSize: 12,
+  color: '#fff',
+};
+
+const INSIGHT_CFG: Record<
+  AIInsight['type'],
+  { neon: string; bg: string; border: string; Icon: React.ElementType }
+> = {
+  critical: { neon: N.red,     bg: 'rgba(255,51,102,0.08)',  border: 'rgba(255,51,102,0.3)',  Icon: AlertOctagon },
+  warning:  { neon: N.amber,   bg: 'rgba(255,170,0,0.08)',   border: 'rgba(255,170,0,0.3)',   Icon: AlertTriangle },
+  success:  { neon: N.emerald, bg: 'rgba(0,255,136,0.08)',   border: 'rgba(0,255,136,0.3)',   Icon: TrendingUp },
+  info:     { neon: N.cyan,    bg: 'rgba(0,212,255,0.08)',   border: 'rgba(0,212,255,0.3)',   Icon: Lightbulb },
+};
+
+const RANKS = [
+  { label: 'S', color: '#ffd700', bg: 'rgba(255,215,0,0.15)' },
+  { label: 'A', color: N.emerald, bg: 'rgba(0,255,136,0.15)' },
+  { label: 'B', color: N.cyan,    bg: 'rgba(0,212,255,0.15)' },
+  { label: 'C', color: N.purple,  bg: 'rgba(168,85,247,0.15)' },
+];
+
+/* ── Animated counter ───────────────────────────────────────────────── */
+function AnimatedNumber({ target, neon }: { target: number; neon: string }) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    const ctrl = animate(0, target, {
+      duration: 1.4,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (v) => setVal(Math.round(v)),
+    });
+    return ctrl.stop;
+  }, [target]);
+  return (
+    <span style={{ textShadow: `0 0 28px ${neon}65` }}>
+      {val.toLocaleString()}
+    </span>
+  );
+}
+
+/* ── 3-D tilt wrapper ───────────────────────────────────────────────── */
+function Card3D({
+  children,
+  className = '',
+  glow = 'rgba(124,58,237,0.4)',
+  style = {},
+}: {
+  children: React.ReactNode;
+  className?: string;
+  glow?: string;
+  style?: React.CSSProperties;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const onMove = (e: React.MouseEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width  - 0.5) * 20;
+    const y = ((e.clientY - r.top)  / r.height - 0.5) * -20;
+    el.style.transform = `perspective(900px) rotateX(${y}deg) rotateY(${x}deg) scale3d(1.03,1.03,1.03)`;
+    el.style.boxShadow = `0 30px 64px rgba(0,0,0,0.6), 0 0 48px ${glow}`;
+  };
+
+  const onLeave = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)';
+    el.style.boxShadow = '0 4px 24px rgba(0,0,0,0.4)';
+  };
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        transition: 'transform 0.22s ease, box-shadow 0.22s ease',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+        ...style,
+      }}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ── KPI card ───────────────────────────────────────────────────────── */
+function KpiCard({
+  label, value, icon: Icon, neon, subtitle,
+}: {
+  label: string; value: number; icon: React.ElementType;
+  neon: string; subtitle: string;
+}) {
+  return (
+    <Card3D glow={`${neon}55`} style={{ borderRadius: 16 }}>
+      <div
+        className="rounded-2xl p-4 h-full flex flex-col justify-between"
+        style={{ ...GLASS, borderTop: `2px solid ${neon}` }}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div
+            className="h-10 w-10 rounded-xl flex items-center justify-center"
+            style={{ background: `${neon}18`, boxShadow: `0 0 20px ${neon}45` }}
+          >
+            <Icon size={18} color={neon} />
+          </div>
+          <span className="text-[10px] font-bold tracking-widest uppercase text-white/30">
+            {label}
+          </span>
+        </div>
+        <div>
+          <p className="text-3xl font-black text-white leading-none mb-1">
+            <AnimatedNumber target={value} neon={neon} />
+          </p>
+          <p className="text-[11px] text-white/35">{subtitle}</p>
+        </div>
+      </div>
+    </Card3D>
+  );
+}
+
+/* ── Section label ──────────────────────────────────────────────────── */
+function SectionLabel({
+  icon: Icon, label, neon,
+}: {
+  icon: React.ElementType; label: string; neon: string;
+}) {
+  return (
+    <p
+      className="text-[10px] font-black tracking-widest uppercase flex items-center gap-1.5 shrink-0 mb-3"
+      style={{ color: 'rgba(255,255,255,0.38)' }}
+    >
+      <Icon size={11} color={neon} />
+      {label}
+    </p>
+  );
+}
+
+/* ── Main page ──────────────────────────────────────────────────────── */
 export function DashboardPage() {
   const now = new Date();
   const [monthStart, setMonthStart] = useState(format(startOfMonth(now), 'yyyy-MM-dd'));
-  const [monthEnd, setMonthEnd] = useState(format(endOfMonth(now), 'yyyy-MM-dd'));
+  const [monthEnd,   setMonthEnd]   = useState(format(endOfMonth(now),   'yyyy-MM-dd'));
 
   const { isAdmin, isPlatformAdmin, user } = useAuth();
   const isOrgAdmin = isAdmin || isPlatformAdmin;
   const { stats, isLoading } = useTaskStats(monthStart, monthEnd, isOrgAdmin, user?.id ?? '');
 
-  const members = stats?.userCompletionStats ?? [];
-  const totalTasks = stats?.totalTasks ?? 0;
-  const completedCount = stats?.statusDistribution?.find((s) => s.name === 'completed')?.value ?? 0;
-  const inProgressCount = stats?.statusDistribution?.find((s) => s.name === 'in_progress')?.value ?? 0;
-  const pendingCount = stats?.statusDistribution?.find((s) => s.name === 'pending')?.value ?? 0;
-  const overdue = stats?.overdueTasks ?? 0;
-  const completionRate = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
-
-  const topPerformer = members.length > 0 ? members[0] : null;
+  const members         = stats?.userCompletionStats ?? [];
+  const totalTasks      = stats?.totalTasks ?? 0;
+  const completedCount  = stats?.statusDistribution?.find(s => s.name === 'completed')?.value   ?? 0;
+  const inProgressCount = stats?.statusDistribution?.find(s => s.name === 'in_progress')?.value ?? 0;
+  const pendingCount    = stats?.statusDistribution?.find(s => s.name === 'pending')?.value     ?? 0;
+  const overdue         = stats?.overdueTasks ?? 0;
+  const completionRate  = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
   const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const [year, month] = e.target.value.split('-').map(Number);
-    const d = new Date(year, month - 1, 1);
+    const [yr, mo] = e.target.value.split('-').map(Number);
+    const d = new Date(yr, mo - 1, 1);
     setMonthStart(format(startOfMonth(d), 'yyyy-MM-dd'));
     setMonthEnd(format(endOfMonth(d), 'yyyy-MM-dd'));
   };
 
   const statusPieData = [
-    { name: 'Completed', value: completedCount },
-    { name: 'In Progress', value: inProgressCount },
-    { name: 'Pending', value: pendingCount },
-    { name: 'Overdue', value: overdue },
-  ].filter((d) => d.value > 0);
+    { name: 'Completed',   value: completedCount  },
+    { name: 'In Progress', value: inProgressCount  },
+    { name: 'Pending',     value: pendingCount     },
+    { name: 'Overdue',     value: overdue          },
+  ].filter(d => d.value > 0);
 
-  const memberChartData = members.map((m) => ({
-    name: m.userName.split(' ')[0] || '?',
-    Completed: m.completed,
+  const memberChartData = members.map(m => ({
+    name:          m.userName.split(' ')[0] || '?',
+    Completed:     m.completed,
     'In Progress': m.inProgress,
-    Pending: m.pending,
-    Overdue: m.overdue,
+    Pending:       m.pending,
+    Overdue:       m.overdue,
   }));
 
+  const hasTrend = stats?.weeklyTrend?.some(w => w.created > 0 || w.completed > 0);
+
+  /* ── Loading ───────────────────────────────────────────────────────── */
   if (isLoading) {
     return (
-      <div className="p-5 space-y-5">
-        <div className="h-10 w-64 animate-pulse bg-muted rounded-xl" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 animate-pulse bg-muted rounded-2xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="h-72 animate-pulse bg-muted rounded-2xl" />
-          <div className="h-72 animate-pulse bg-muted rounded-2xl" />
+      <div
+        className="h-[calc(100vh-3.5rem)] flex items-center justify-center"
+        style={{ background: '#050508' }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className="h-12 w-12 rounded-full border-2 animate-spin"
+            style={{ borderColor: `${N.cyan} transparent transparent transparent` }}
+          />
+          <p className="text-[11px] tracking-widest uppercase text-white/30">
+            Loading Mission Data
+          </p>
         </div>
       </div>
     );
   }
 
+  /* ── Page ──────────────────────────────────────────────────────────── */
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden p-5 gap-5">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {isOrgAdmin
-              ? `${members.length} team member${members.length !== 1 ? 's' : ''} · ${format(new Date(monthStart), 'MMMM yyyy')}`
-              : `My tasks · ${format(new Date(monthStart), 'MMMM yyyy')}`}
-          </p>
+    <div
+      className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden p-4 gap-3"
+      style={{
+        background: '#050508',
+        backgroundImage: `
+          linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px)
+        `,
+        backgroundSize: '48px 48px',
+      }}
+    >
+      {/* ── HEADER ───────────────────────────────────────────────────── */}
+      <motion.div
+        className="flex items-center justify-between shrink-0"
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="h-9 w-9 rounded-xl flex items-center justify-center"
+            style={{
+              background: 'rgba(168,85,247,0.2)',
+              boxShadow: '0 0 24px rgba(168,85,247,0.5)',
+            }}
+          >
+            <Activity size={17} color={N.purple} />
+          </div>
+          <div>
+            <h1 className="text-base font-black text-white tracking-tight leading-none">
+              Mission Control
+            </h1>
+            <p className="text-[11px] text-white/35 mt-0.5">
+              {isOrgAdmin
+                ? `${members.length} agent${members.length !== 1 ? 's' : ''} · ${format(new Date(monthStart), 'MMM yyyy')}`
+                : `Personal ops · ${format(new Date(monthStart), 'MMM yyyy')}`}
+            </p>
+          </div>
         </div>
-        <Input
-          type="month"
-          value={monthStart.slice(0, 7)}
-          onChange={handleMonthChange}
-          className="w-44"
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] font-bold text-emerald-400 tracking-widest">LIVE</span>
+          </div>
+          <input
+            type="month"
+            value={monthStart.slice(0, 7)}
+            onChange={handleMonthChange}
+            className="text-xs px-3 py-1.5 rounded-lg text-white outline-none"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              colorScheme: 'dark',
+            }}
+          />
+        </div>
+      </motion.div>
+
+      {/* ── KPI ROW ──────────────────────────────────────────────────── */}
+      <motion.div
+        className="grid grid-cols-4 gap-3 shrink-0"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <KpiCard
+          label="Total Tasks" value={totalTasks} icon={ListTodo}
+          neon={N.cyan} subtitle={`${stats?.myOpenTasks ?? 0} assigned to you`}
         />
-      </div>
+        <KpiCard
+          label="Completed" value={completedCount} icon={CheckCircle2}
+          neon={N.emerald} subtitle={`${completionRate}% completion rate`}
+        />
+        <KpiCard
+          label="In Progress" value={inProgressCount} icon={Zap}
+          neon={N.amber} subtitle="Currently active"
+        />
+        <KpiCard
+          label="Overdue" value={overdue} icon={AlertTriangle}
+          neon={overdue > 0 ? N.red : N.emerald}
+          subtitle={overdue > 0 ? 'Needs attention' : 'All on track'}
+        />
+      </motion.div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto space-y-4">
-        {/* KPI Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard
-            label="Total Tasks"
-            value={totalTasks}
-            icon={ListTodo}
-            iconBg="bg-sky-500/10"
-            iconColor="text-sky-600"
-            subtitle={`${stats?.myOpenTasks ?? 0} assigned to you`}
-          />
-          <KpiCard
-            label="Completed"
-            value={completedCount}
-            icon={CheckCircle2}
-            iconBg="bg-emerald-500/10"
-            iconColor="text-emerald-600"
-            subtitle={`${completionRate}% completion rate`}
-          />
-          <KpiCard
-            label="In Progress"
-            value={inProgressCount}
-            icon={Zap}
-            iconBg="bg-amber-500/10"
-            iconColor="text-amber-600"
-            subtitle="Currently active"
-          />
-          <KpiCard
-            label="Overdue"
-            value={overdue}
-            icon={AlertTriangle}
-            iconBg={overdue > 0 ? 'bg-red-500/10' : 'bg-emerald-500/10'}
-            iconColor={overdue > 0 ? 'text-red-600' : 'text-emerald-600'}
-            subtitle={overdue > 0 ? 'Needs attention' : 'All on track'}
-          />
-        </div>
+      {/* ── MAIN GRID ────────────────────────────────────────────────── */}
+      <motion.div
+        className="flex-1 min-h-0 grid grid-cols-3 gap-3"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {/* Left — charts (2 cols) ─────────────────────────────────── */}
+        <div className="col-span-2 flex flex-col gap-3 min-h-0">
 
-        {/* AI Insights */}
-        {stats?.aiInsights && stats.aiInsights.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                  <Sparkles className="h-3.5 w-3.5 text-violet-600" />
-                </div>
-                AI Insights
-                <span className="ml-auto text-[10px] font-semibold text-violet-600 bg-violet-500/10 px-2 py-0.5 rounded-full">
-                  {stats.aiInsights.length}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
-                {stats.aiInsights.map((insight, i) => {
-                  const style = INSIGHT_STYLES[insight.type];
-                  const Icon = INSIGHT_ICONS[insight.type];
-                  return (
-                    <div
-                      key={i}
-                      className={`border-l-2 ${style.border} ${style.bg} rounded-r-lg px-3 py-2`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <Icon className={`h-4 w-4 ${style.iconColor} shrink-0 mt-0.5`} />
-                        <div className="min-w-0">
-                          <p className={`font-semibold text-xs ${style.text} leading-tight`}>
-                            {insight.title}
-                          </p>
-                          <p className={`text-[11px] mt-0.5 ${style.text} opacity-70 leading-snug line-clamp-2`}>
-                            {insight.description}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Charts Row: Member Performance + Status Pie */}
-        <div className={`grid grid-cols-1 ${isOrgAdmin ? 'lg:grid-cols-3' : ''} gap-4`}>
-          {/* Member Performance Bar Chart — admin only */}
+          {/* Team Performance — admin */}
           {isOrgAdmin && (
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                    <Target className="h-3.5 w-3.5 text-violet-600" />
-                  </div>
-                  Member Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {memberChartData.length === 0 ? (
-                  <div className="flex items-center justify-center h-[260px] text-muted-foreground">
-                    <div className="text-center">
-                      <Users className="mx-auto mb-2 h-8 w-8 opacity-30" />
-                      <p className="text-sm">No data yet</p>
-                    </div>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={memberChartData} barCategoryGap="20%">
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: 12,
-                          border: '1px solid hsl(220,13%,91%)',
-                          fontSize: 12,
-                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                        }}
+            <div
+              className="flex-1 rounded-2xl p-4 min-h-0 flex flex-col"
+              style={{ ...GLASS, borderRadius: 16 }}
+            >
+              <SectionLabel icon={Target} label="Team Performance" neon={N.purple} />
+              {memberChartData.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <Users size={32} color="rgba(255,255,255,0.1)" />
+                </div>
+              ) : (
+                <div className="flex-1 min-h-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={memberChartData} barCategoryGap="24%">
+                      <CartesianGrid
+                        stroke="rgba(255,255,255,0.05)"
+                        strokeDasharray="4 4"
+                        vertical={false}
                       />
-                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                      <Bar dataKey="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="In Progress" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="Pending" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="Overdue" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                      <XAxis dataKey="name" tick={CHART_AXIS} tickLine={false} axisLine={false} />
+                      <YAxis allowDecimals={false} tick={CHART_AXIS} tickLine={false} axisLine={false} />
+                      <Tooltip contentStyle={CHART_TIP} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                      <Bar dataKey="Completed"    fill={N.emerald} radius={[3,3,0,0]} />
+                      <Bar dataKey="In Progress"  fill={N.blue}    radius={[3,3,0,0]} />
+                      <Bar dataKey="Pending"      fill={N.amber}   radius={[3,3,0,0]} />
+                      <Bar dataKey="Overdue"      fill={N.red}     radius={[3,3,0,0]} />
                     </BarChart>
                   </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
+            </div>
           )}
 
-          {/* Status Pie */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                </div>
-                Status Split
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          {/* Weekly Trend */}
+          {hasTrend ? (
+            <div
+              className={`rounded-2xl p-4 flex flex-col min-h-0 ${isOrgAdmin ? 'shrink-0' : 'flex-1'}`}
+              style={{ ...GLASS, borderRadius: 16, ...(isOrgAdmin ? { height: 172 } : {}) }}
+            >
+              <SectionLabel icon={TrendingUp} label="Weekly Trend" neon={N.cyan} />
+              <div className="flex-1 min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats!.weeklyTrend} barCategoryGap="30%">
+                    <CartesianGrid
+                      stroke="rgba(255,255,255,0.05)"
+                      strokeDasharray="4 4"
+                      vertical={false}
+                    />
+                    <XAxis dataKey="week" tick={CHART_AXIS} tickLine={false} axisLine={false} />
+                    <YAxis allowDecimals={false} tick={CHART_AXIS} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={CHART_TIP} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                    <Bar dataKey="created"   name="Created"   fill={N.purple}  radius={[3,3,0,0]} />
+                    <Bar dataKey="completed" name="Completed" fill={N.emerald} radius={[3,3,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : !isOrgAdmin ? (
+            <div
+              className="flex-1 flex items-center justify-center rounded-2xl"
+              style={{ ...GLASS, borderRadius: 16 }}
+            >
+              <p className="text-white/20 text-sm">No trend data yet</p>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Right — donut + leaderboard (1 col) ───────────────────── */}
+        <div className="col-span-1 flex flex-col gap-3 min-h-0">
+
+          {/* Status donut */}
+          <Card3D glow="rgba(0,255,136,0.35)" style={{ borderRadius: 16, flexShrink: 0 }}>
+            <div className="rounded-2xl p-4" style={{ ...GLASS, borderRadius: 16 }}>
+              <SectionLabel icon={CheckCircle2} label="Status Split" neon={N.emerald} />
               {statusPieData.length === 0 ? (
-                <div className="flex items-center justify-center h-[260px] text-muted-foreground">
-                  <p className="text-sm">No data</p>
+                <div className="h-28 flex items-center justify-center text-white/20 text-sm">
+                  No data
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
-                  <ResponsiveContainer width="100%" height={180}>
-                    <PieChart>
-                      <Pie
-                        data={statusPieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={75}
-                        dataKey="value"
-                        stroke="none"
-                        startAngle={90}
-                        endAngle={-270}
-                      >
-                        {statusPieData.map((_, i) => (
-                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <text
-                        x="50%"
-                        y="50%"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        className="fill-foreground text-2xl font-bold"
+                  <div className="relative">
+                    <ResponsiveContainer width={148} height={148}>
+                      <PieChart>
+                        <Pie
+                          data={statusPieData}
+                          cx="50%" cy="50%"
+                          innerRadius={46} outerRadius={66}
+                          dataKey="value" stroke="none"
+                          startAngle={90} endAngle={-270}
+                        >
+                          {statusPieData.map((_, i) => (
+                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span
+                        className="text-2xl font-black text-white"
+                        style={{ textShadow: `0 0 24px ${N.emerald}80` }}
                       >
                         {completionRate}%
-                      </text>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex flex-wrap justify-center gap-3 mt-2">
+                      </span>
+                      <span className="text-[9px] tracking-widest uppercase text-white/35">done</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-1">
                     {statusPieData.map((d, i) => (
-                      <div key={d.name} className="flex items-center gap-1.5 text-[11px]">
-                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
-                        <span className="text-muted-foreground">{d.name}</span>
-                        <span className="font-semibold">{d.value}</span>
+                      <div key={d.name} className="flex items-center gap-1 text-[10px]">
+                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
+                        <span className="text-white/40">{d.name}</span>
+                        <span className="font-bold text-white">{d.value}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </Card3D>
 
-        {/* Weekly Trend */}
-        {stats?.weeklyTrend && stats.weeklyTrend.some((w) => w.created > 0 || w.completed > 0) && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                  <TrendingUp className="h-3.5 w-3.5 text-indigo-600" />
-                </div>
-                Weekly Trend
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={stats.weeklyTrend} barCategoryGap="30%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" vertical={false} />
-                  <XAxis dataKey="week" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: '1px solid hsl(220,13%,91%)',
-                      fontSize: 12,
-                    }}
-                  />
-                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="created" name="Created" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="completed" name="Completed" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Top Performer + Team Leaderboard — admin only */}
-        {isOrgAdmin && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Top Performer Spotlight */}
-            {topPerformer && topPerformer.completed > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                      <Trophy className="h-3.5 w-3.5 text-amber-600" />
-                    </div>
-                    Top Performer
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-base font-bold text-foreground mb-4">{topPerformer.userName}</p>
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="p-2 rounded-xl bg-muted/50">
-                      <p className="text-xl font-bold text-emerald-600">{topPerformer.completed}</p>
-                      <p className="text-[10px] text-muted-foreground">Done</p>
-                    </div>
-                    <div className="p-2 rounded-xl bg-muted/50">
-                      <p className="text-xl font-bold text-sky-600">{topPerformer.onTime}</p>
-                      <p className="text-[10px] text-muted-foreground">On Time</p>
-                    </div>
-                    <div className="p-2 rounded-xl bg-muted/50">
-                      <p className="text-xl font-bold text-foreground">{topPerformer.avgCompletionDays ?? '-'}</p>
-                      <p className="text-[10px] text-muted-foreground">Avg Days</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Team Leaderboard */}
-            <Card className={topPerformer && topPerformer.completed > 0 ? 'lg:col-span-2' : 'lg:col-span-3'}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                    <Flame className="h-3.5 w-3.5 text-orange-600" />
-                  </div>
-                  Team Leaderboard
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {members.length === 0 ? (
-                  <div className="flex items-center justify-center py-8 text-muted-foreground">
-                    <p className="text-sm">No members yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {members.map((member, idx) => {
-                      const pct = member.total > 0 ? Math.round((member.completed / member.total) * 100) : 0;
-                      return (
-                        <div
-                          key={member.userId}
-                          className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="w-5 text-xs font-semibold text-muted-foreground text-center">{idx + 1}</span>
-                            <div>
-                              <p className="text-sm font-medium">{member.userName}</p>
-                              <p className="text-[10px] text-muted-foreground">{pct}% complete</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                            <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-0">
-                              {member.completed} done
-                            </Badge>
-                            {member.overdue > 0 && (
-                              <Badge variant="secondary" className="text-[10px] bg-red-500/10 text-red-700 dark:text-red-400 border-0">
-                                {member.overdue} overdue
-                              </Badge>
-                            )}
-                            {member.avgCompletionDays != null && (
-                              <Badge variant="outline" className="text-[10px]">
-                                <Timer className="h-3 w-3 mr-0.5" />
-                                {member.avgCompletionDays}d avg
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Individual Member Breakdown Cards — admin only */}
-        {isOrgAdmin && members.length > 0 && (
-          <div>
-            <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Individual Breakdown
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {members.map((member) => {
-                const pct = member.total > 0 ? Math.round((member.completed / member.total) * 100) : 0;
-                const onTimePct = member.completed > 0 ? Math.round((member.onTime / member.completed) * 100) : 0;
-                return (
-                  <Card key={member.userId}>
-                    <CardContent className="p-5">
-                      {/* Member Header */}
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center font-bold text-sm text-foreground">
-                          {member.userName?.charAt(0) || '?'}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm">{member.userName}</p>
-                          <p className="text-[10px] text-muted-foreground">{member.total} total tasks</p>
-                        </div>
+          {/* Leaderboard — admin */}
+          {isOrgAdmin && members.length > 0 && (
+            <div
+              className="flex-1 rounded-2xl p-4 flex flex-col min-h-0 overflow-hidden"
+              style={{ ...GLASS, borderRadius: 16 }}
+            >
+              <SectionLabel icon={Flame} label="Leaderboard" neon={N.amber} />
+              <div
+                className="flex-1 overflow-y-auto space-y-1.5"
+                style={{ scrollbarWidth: 'none' }}
+              >
+                {members.map((m, i) => {
+                  const rank = RANKS[Math.min(i, RANKS.length - 1)];
+                  const pct  = m.total > 0 ? Math.round((m.completed / m.total) * 100) : 0;
+                  return (
+                    <div
+                      key={m.userId}
+                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl"
+                      style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      <div
+                        className="h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0"
+                        style={{ background: rank.bg, color: rank.color }}
+                      >
+                        {rank.label}
                       </div>
-
-                      {/* Completion Progress */}
-                      <div className="mb-4">
-                        <div className="flex justify-between text-[11px] mb-1.5">
-                          <span className="text-muted-foreground">Completion</span>
-                          <span className="font-semibold">{pct}%</span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-white/85 truncate">{m.userName}</p>
+                        <div
+                          className="h-1 rounded-full mt-1.5 overflow-hidden"
+                          style={{ background: 'rgba(255,255,255,0.08)' }}
+                        >
                           <div
-                            className="h-full rounded-full bg-primary transition-all duration-700"
-                            style={{ width: `${pct}%` }}
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${pct}%`,
+                              background: `linear-gradient(90deg,${rank.color},${rank.color}88)`,
+                              boxShadow: `0 0 8px ${rank.color}80`,
+                            }}
                           />
                         </div>
                       </div>
-
-                      {/* Stats Grid */}
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div className="p-1.5 rounded-lg bg-muted/50">
-                          <p className="text-base font-bold text-emerald-600">{member.completed}</p>
-                          <p className="text-[9px] text-muted-foreground">Done</p>
-                        </div>
-                        <div className="p-1.5 rounded-lg bg-muted/50">
-                          <p className="text-base font-bold text-blue-600">{member.inProgress}</p>
-                          <p className="text-[9px] text-muted-foreground">Active</p>
-                        </div>
-                        <div className="p-1.5 rounded-lg bg-muted/50">
-                          <p className={`text-base font-bold ${member.overdue > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                            {member.overdue}
-                          </p>
-                          <p className="text-[9px] text-muted-foreground">Overdue</p>
-                        </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-black" style={{ color: rank.color }}>
+                          {m.completed}
+                        </p>
+                        <p className="text-[9px] text-white/25">done</p>
                       </div>
-
-                      {/* Bottom Stats */}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[10px] text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <ArrowUp className="h-3 w-3 text-emerald-500" />
-                          {onTimePct}% on-time
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Timer className="h-3 w-3" />
-                          {member.avgCompletionDays ?? '-'}d avg
-                        </span>
-                        {member.highPriority > 0 && (
-                          <span className="flex items-center gap-1 text-orange-600 font-medium">
-                            <Flame className="h-3 w-3" />
-                            {member.highPriority} critical
-                          </span>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+          )}
 
-/* ── KPI Card Component ────────────────────────────────────────────── */
-function KpiCard({
-  label,
-  value,
-  icon: Icon,
-  iconBg,
-  iconColor,
-  subtitle,
-}: {
-  label: string;
-  value: number;
-  icon: React.ElementType;
-  iconBg: string;
-  iconColor: string;
-  subtitle: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`h-9 w-9 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
-            <Icon className={`h-4.5 w-4.5 ${iconColor}`} />
-          </div>
-          <span className="text-xs font-medium text-muted-foreground">{label}</span>
+          {/* My stats — non-admin */}
+          {!isOrgAdmin && (
+            <div
+              className="flex-1 rounded-2xl p-4 flex flex-col gap-2 min-h-0"
+              style={{ ...GLASS, borderRadius: 16 }}
+            >
+              <SectionLabel icon={Activity} label="My Stats" neon={N.cyan} />
+              {[
+                { label: 'Assigned',    value: stats?.myOpenTasks ?? 0, color: N.cyan    },
+                { label: 'Completed',   value: completedCount,           color: N.emerald },
+                { label: 'In Progress', value: inProgressCount,          color: N.amber   },
+                { label: 'Overdue',     value: overdue, color: overdue > 0 ? N.red : N.emerald },
+              ].map(row => (
+                <div
+                  key={row.label}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <span className="text-xs text-white/50">{row.label}</span>
+                  <span
+                    className="text-sm font-black"
+                    style={{ color: row.color, textShadow: `0 0 12px ${row.color}70` }}
+                  >
+                    {row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
-        <p className="text-[11px] text-muted-foreground mt-1">{subtitle}</p>
-      </CardContent>
-    </Card>
+      </motion.div>
+
+      {/* ── AI INSIGHTS STRIP ────────────────────────────────────────── */}
+      {stats?.aiInsights && stats.aiInsights.length > 0 && (
+        <motion.div
+          className="shrink-0"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.26, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            {stats.aiInsights.map((insight, i) => {
+              const cfg = INSIGHT_CFG[insight.type];
+              return (
+                <div
+                  key={i}
+                  className="shrink-0 flex items-start gap-2 px-3 py-2.5 rounded-xl"
+                  style={{
+                    background: cfg.bg,
+                    border: `1px solid ${cfg.border}`,
+                    minWidth: 220,
+                    maxWidth: 280,
+                  }}
+                >
+                  <cfg.Icon size={12} color={cfg.neon} style={{ marginTop: 1, flexShrink: 0 }} />
+                  <div className="min-w-0">
+                    <p
+                      className="text-[11px] font-bold leading-tight"
+                      style={{ color: cfg.neon }}
+                    >
+                      {insight.title}
+                    </p>
+                    <p className="text-[10px] mt-0.5 leading-snug text-white/40 line-clamp-2">
+                      {insight.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+    </div>
   );
 }
