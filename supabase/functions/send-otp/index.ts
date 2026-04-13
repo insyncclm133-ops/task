@@ -111,10 +111,14 @@ Deno.serve(async (req) => {
               from: exotelFrom,
               to: phone,
               content: {
-                type: 'text',
-                text: {
-                  preview_url: false,
-                  body: `Your Work-Sync verification code is *${phoneOtp}*. Valid for 10 minutes. Do not share this with anyone.`,
+                type: 'template',
+                template: {
+                  name: 'otp',
+                  language: { code: 'en' },
+                  components: [{
+                    type: 'body',
+                    parameters: [{ type: 'text', text: phoneOtp }],
+                  }],
                 },
               },
             }],
