@@ -24,6 +24,7 @@ export function UserManagementPage() {
       const { data, error: fetchError } = await supabase
         .from('user_roles')
         .select('*, profiles(*)')
+        .eq('org_id', profile?.org_id)
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;

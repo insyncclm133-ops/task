@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'create-user': {
-        const { email, password, full_name, first_name, last_name, phone, org_id, role, designation_id, department } = body;
+        const { email, password, full_name: rawFullName, first_name, last_name, phone, org_id, role, designation_id, department } = body;
 
         if (!email || !phone) {
           return new Response(JSON.stringify({ error: 'Email and phone number are required' }), {
@@ -62,6 +62,9 @@ Deno.serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
+
+        // Derive full_name from first+last if not explicitly provided
+        const full_name = rawFullName || [first_name, last_name].filter(Boolean).join(' ') || '';
 
         // Fall back to caller's org when not explicitly provided
         const effectiveOrgId = org_id || callerRole.org_id;
@@ -123,7 +126,8 @@ Deno.serve(async (req) => {
       }
 
       case 'update-user': {
-        const { user_id, email, password, full_name, first_name, last_name, phone, org_id, role, designation_id, department, is_active } = body;
+        const { user_id, email, password, full_name: rawFullNameUpdate, first_name, last_name, phone, org_id, role, designation_id, department, is_active } = body;
+        const full_name = rawFullNameUpdate || [first_name, last_name].filter(Boolean).join(' ') || undefined;
 
         // Update auth user if email or password changed
         const authUpdates: Record<string, unknown> = {};
