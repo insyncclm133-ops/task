@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     // Check if the caller is an admin or super_admin
     const { data: callerRole } = await adminClient
       .from('user_roles')
-      .select('role')
+      .select('role, org_id')
       .eq('user_id', caller.id)
       .eq('is_active', true)
       .single();
@@ -63,6 +63,9 @@ Deno.serve(async (req) => {
           });
         }
 
+        // Fall back to caller's org when not explicitly provided
+        const effectiveOrgId = org_id || callerRole.org_id;
+
         // Create user in auth.users
         const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
           email,
@@ -86,7 +89,7 @@ Deno.serve(async (req) => {
             first_name: first_name || null,
             last_name: last_name || null,
             phone: phone || null,
-            org_id: org_id || null,
+            org_id: effectiveOrgId || null,
             designation_id: designation_id || null,
             department: department || null,
             is_active: true,
@@ -98,12 +101,12 @@ Deno.serve(async (req) => {
         }
 
         // Create user role
-        if (org_id && role) {
+        if (effectiveOrgId && role) {
           const { error: roleError } = await adminClient
             .from('user_roles')
             .insert({
               user_id: newUser.user.id,
-              org_id,
+              org_id: effectiveOrgId,
               role,
               is_active: true,
             });

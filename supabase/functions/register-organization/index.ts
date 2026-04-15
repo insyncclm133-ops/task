@@ -160,23 +160,12 @@ Deno.serve(async (req) => {
     }).eq('id', userId);
 
     // ── Assign admin role ──────────────────────────────────────────────────
-    const { error: roleErr } = await supabase.from('user_roles').insert({
+    await supabase.from('user_roles').insert({
       user_id: userId,
       org_id: org.id,
       role: 'admin',
       is_active: true,
     });
-
-    if (roleErr) {
-      console.error('Admin role assignment failed:', roleErr);
-      // Rollback: remove the created user and org
-      await supabase.auth.admin.deleteUser(userId);
-      await supabase.from('organizations').delete().eq('id', org.id);
-      return new Response(
-        JSON.stringify({ error: 'Failed to assign admin role. Please try again.' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
 
     return new Response(
       JSON.stringify({ success: true, org_id: org.id, user_id: userId }),
