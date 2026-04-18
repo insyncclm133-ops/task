@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZDH19DKNNE"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-ZDH19DKNNE');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Work-Sync — Task Accountability for Indian Teams</title>
+  <meta name="description" content="You gave the task. Do you know if it's done? Hierarchical task accountability with WhatsApp + email alerts at every step — built for how Indian teams actually work." />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0f172a;background:#fff;line-height:1.6}
+    a{text-decoration:none;color:inherit}
+    .wrap{max-width:1152px;margin:0 auto;padding:0 24px}
+    .wrap-sm{max-width:768px;margin:0 auto;padding:0 24px}
+    .wrap-md{max-width:960px;margin:0 auto;padding:0 24px}
+    .center{text-align:center}
+    .muted{color:#64748b}
+    .purple{color:#7c3aed}
+    .red{color:#ef4444}
+    .gradient-text{background:linear-gradient(90deg,#8b5cf6,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .border-t{border-top:1px solid #e2e8f0}
+    .bg-muted{background:#f8fafc}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:9999px;font-size:14px;font-weight:500}
+    .title{font-size:48px;font-weight:700;letter-spacing:-0.025em;line-height:1.1}
+    .subtitle{font-size:18px;color:#64748b;margin-top:20px;max-width:640px;margin-left:auto;margin-right:auto}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:12px;font-weight:600;font-size:16px;border:none}
+    .btn-purple{background:#7c3aed;color:#fff;box-shadow:0 10px 25px rgba(124,58,237,0.25)}
+    .btn-outline{border:1px solid #e2e8f0;background:#fff}
+    .btn-white{background:#fff;color:#7c3aed;box-shadow:0 10px 25px rgba(0,0,0,0.15)}
+    .card{border:1px solid #e2e8f0;border-radius:16px;padding:28px;background:#fff}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:32px}
+    .icon-box{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:20px}
+    .step-circle{width:112px;height:112px;border-radius:50%;background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(124,58,237,0.05));display:flex;align-items:center;justify-content:center;margin:0 auto 24px;position:relative;border:1px solid rgba(124,58,237,0.2);font-size:32px}
+    .step-num{position:absolute;top:-4px;right:-4px;width:28px;height:28px;border-radius:50%;background:#7c3aed;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(124,58,237,0.25)}
+    .plan{border-radius:24px;padding:32px;background:#fff;position:relative}
+    .plan-pop{border:2px solid rgba(124,58,237,0.3);box-shadow:0 20px 40px rgba(124,58,237,0.05)}
+    .plan-std{border:1px solid #e2e8f0}
+    .badge{position:absolute;top:-16px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;padding:6px 20px;border-radius:9999px;background:#7c3aed;color:#fff;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(124,58,237,0.25);white-space:nowrap}
+    .checks{list-style:none}
+    .checks li{display:flex;align-items:center;gap:12px;font-size:14px;padding:6px 0}
+    .checks li::before{content:"✓";width:20px;height:20px;border-radius:50%;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#7c3aed;font-size:12px;font-weight:700}
+    .vpill{padding:8px 16px;border-radius:9999px;border:1px solid #e2e8f0;font-size:14px;font-weight:500;background:#fff;display:inline-block}
+    .avatar{width:36px;height:36px;border-radius:50%;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;font-weight:700;color:#7c3aed;font-size:14px;flex-shrink:0}
+    .marquee-wrap{overflow:hidden}
+    .marquee-track{display:flex;gap:24px;animation:marquee 35s linear infinite;width:max-content}
+    .marquee-rev{display:flex;gap:24px;animation:marquee-rev 35s linear infinite;width:max-content}
+    .logo-pill{flex-shrink:0;padding:8px 20px;border:1px solid rgba(226,232,240,0.5);border-radius:12px;background:rgba(255,255,255,0.8);font-size:12px;font-weight:600;color:#94a3b8;white-space:nowrap}
+    @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+    @keyframes marquee-rev{0%{transform:translateX(-50%)}100%{transform:translateX(0)}}
+    @media(max-width:768px){
+      .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+      .hide-m{display:none!important}
+      .title{font-size:30px!important}
+      .hero-h{font-size:36px!important}
+      .hero-btns{flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header style="position:sticky;top:0;z-index:50;border-bottom:1px solid #e2e8f0;background:rgba(255,255,255,0.85);backdrop-filter:blur(12px)">
+  <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;height:64px">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px">
+      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px">⚡</div>
+      Work-Sync
+    </div>
+    <nav class="hide-m" style="display:flex;gap:24px;font-size:14px;color:#64748b">
+      <a href="#problem">Why Work-Sync</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:12px">
+      <a href="#" style="font-size:14px;font-weight:500;color:#64748b">Sign In</a>
+      <a href="#" class="btn btn-purple" style="padding:8px 16px;font-size:14px;box-shadow:none">Get Started</a>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section style="padding:112px 24px 96px;text-align:center;position:relative;overflow:hidden">
+  <div style="max-width:896px;margin:0 auto">
+    <div class="pill" style="background:rgba(124,58,237,0.1);color:#7c3aed;margin-bottom:32px">
+      <span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;display:inline-block"></span>
+      Part of the In-Sync family
+    </div>
+    <h1 class="hero-h" style="font-size:64px;font-weight:700;letter-spacing:-0.03em;line-height:1.1">
+      You gave the task. <span class="gradient-text">Do you know if it's done?</span>
+    </h1>
+    <p style="margin-top:24px;font-size:20px;color:#64748b;max-width:640px;margin-left:auto;margin-right:auto">
+      Hierarchical task accountability with WhatsApp + email alerts at every step — built for how Indian teams actually work.
+    </p>
+    <div class="hero-btns" style="margin-top:40px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap">
+      <a href="#" class="btn btn-purple">Start Free — No Card Needed →</a>
+      <a href="#how-it-works" class="btn btn-outline">See How It Works</a>
+    </div>
+    <div style="margin-top:56px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:32px;font-size:14px;color:#64748b">
+      <span>📱 WhatsApp alerts</span>
+      <span>📧 Email notifications</span>
+      <span>🛡️ Designation hierarchy</span>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section class="border-t bg-muted" style="padding:56px 0 64px">
+  <div class="wrap center" style="margin-bottom:40px">
+    <p style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#64748b">Trusted by 100+ businesses across India</p>
+  </div>
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <span class="logo-pill">Quess Corp</span><span class="logo-pill">Motherson</span><span class="logo-pill">Hiranandani</span><span class="logo-pill">Audi</span><span class="logo-pill">College Dekho</span><span class="logo-pill">Zolve</span><span class="logo-pill">Capital India</span><span class="logo-pill">Ecofy</span><span class="logo-pill">Zopper</span><span class="logo-pill">Alice Blue</span><span class="logo-pill">Ezeepay</span>
+      <span class="logo-pill">Quess Corp</span><span class="logo-pill">Motherson</span><span class="logo-pill">Hiranandani</span><span class="logo-pill">Audi</span><span class="logo-pill">College Dekho</span><span class="logo-pill">Zolve</span><span class="logo-pill">Capital India</span><span class="logo-pill">Ecofy</span><span class="logo-pill">Zopper</span><span class="logo-pill">Alice Blue</span><span class="logo-pill">Ezeepay</span>
+    </div>
+  </div>
+  <div class="marquee-wrap" style="margin-top:16px">
+    <div class="marquee-rev">
+      <span class="logo-pill">InCred</span><span class="logo-pill">Seeds</span><span class="logo-pill">GrowthVine</span><span class="logo-pill">UHC</span><span class="logo-pill">Car Trends</span><span class="logo-pill">LegitQuest</span><span class="logo-pill">EV Co</span><span class="logo-pill">BluSpring</span><span class="logo-pill">Cubit</span><span class="logo-pill">SMB Connect</span><span class="logo-pill">RB</span>
+      <span class="logo-pill">InCred</span><span class="logo-pill">Seeds</span><span class="logo-pill">GrowthVine</span><span class="logo-pill">UHC</span><span class="logo-pill">Car Trends</span><span class="logo-pill">LegitQuest</span><span class="logo-pill">EV Co</span><span class="logo-pill">BluSpring</span><span class="logo-pill">Cubit</span><span class="logo-pill">SMB Connect</span><span class="logo-pill">RB</span>
+    </div>
+  </div>
+</section>
+
+<!-- THE PROBLEM -->
+<section id="problem" class="border-t" style="padding:96px 24px">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:80px">
+      <div class="pill" style="background:rgba(239,68,68,0.1);color:#dc2626">⚠ The Problem</div>
+      <h2 class="title" style="margin-top:16px">Tasks given. <span class="red">Tasks forgotten.</span></h2>
+      <p class="subtitle">In most Indian teams, task assignment happens over calls, WhatsApp, or verbal instructions. There's no system, no tracking, and no accountability.</p>
+    </div>
+    <div class="grid-2">
+      <div class="card" style="border-color:rgba(252,165,165,0.5);background:rgba(254,242,242,0.3)">
+        <div class="icon-box" style="background:#fee2e2">⚠️</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Tasks given, never tracked</h3>
+        <p style="font-size:14px;color:#64748b">Managers assign tasks verbally or over chat. No record. No follow-up.</p>
+      </div>
+      <div class="card" style="border-color:rgba(252,165,165,0.5);background:rgba(254,242,242,0.3)">
+        <div class="icon-box" style="background:#fee2e2">🕐</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Deadlines missed silently</h3>
+        <p style="font-size:14px;color:#64748b">Due dates pass. Nobody knows until the client complains.</p>
+      </div>
+      <div class="card" style="border-color:rgba(252,165,165,0.5);background:rgba(254,242,242,0.3)">
+        <div class="icon-box" style="background:#fee2e2">👥</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">No accountability chain</h3>
+        <p style="font-size:14px;color:#64748b">Who assigned it? Who was supposed to do it? Nobody remembers.</p>
+      </div>
+      <div class="card" style="border-color:rgba(252,165,165,0.5);background:rgba(254,242,242,0.3)">
+        <div class="icon-box" style="background:#fee2e2">💬</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Updates lost in WhatsApp</h3>
+        <p style="font-size:14px;color:#64748b">Task status buried in chat groups. Impossible to extract.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works" class="border-t bg-muted" style="padding:96px 24px">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:80px">
+      <div class="pill" style="background:rgba(124,58,237,0.1);color:#7c3aed">⚡ How Work-Sync Works</div>
+      <h2 class="title" style="margin-top:16px">Assign → Notify → Update → <span class="purple">Confirm</span></h2>
+      <p class="subtitle">Every task gets tracked from assignment to completion with automatic alerts</p>
+    </div>
+    <div class="grid-4 center">
+      <div>
+        <div class="step-circle">🚩<div class="step-num">1</div></div>
+        <h3 style="font-size:18px;font-weight:600">Assign</h3>
+        <p style="font-size:14px;color:#64748b;max-width:240px;margin:8px auto 0">Create a task with deadline, priority, and assignee. Instant WhatsApp + email notification.</p>
+      </div>
+      <div>
+        <div class="step-circle">🔔<div class="step-num">2</div></div>
+        <h3 style="font-size:18px;font-weight:600">Notify</h3>
+        <p style="font-size:14px;color:#64748b;max-width:240px;margin:8px auto 0">Assignee gets notified on WhatsApp and email. No more "I didn't know about it".</p>
+      </div>
+      <div>
+        <div class="step-circle">📊<div class="step-num">3</div></div>
+        <h3 style="font-size:18px;font-weight:600">Update</h3>
+        <p style="font-size:14px;color:#64748b;max-width:240px;margin:8px auto 0">Status changes trigger automatic alerts. Everyone stays in the loop.</p>
+      </div>
+      <div>
+        <div class="step-circle">✅<div class="step-num">4</div></div>
+        <h3 style="font-size:18px;font-weight:600">Confirm</h3>
+        <p style="font-size:14px;color:#64748b;max-width:240px;margin:8px auto 0">Assigner signs off on completion quality. "Done" means actually done.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="border-t" style="padding:96px 24px">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:80px">
+      <div class="pill" style="background:rgba(124,58,237,0.1);color:#7c3aed">✨ Features</div>
+      <h2 class="title" style="margin-top:16px">Built for <span class="purple">Indian teams</span></h2>
+      <p class="subtitle">WhatsApp-first notifications, designation hierarchies, and the accountability your team needs.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card" style="background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(34,197,94,0.06))">
+        <div class="icon-box" style="background:rgba(124,58,237,0.1)">📱</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">WhatsApp Alerts</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">Instant task notifications on WhatsApp at every lifecycle stage — the one weapon Asana cannot match.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(139,92,246,0.06),rgba(124,58,237,0.06))">
+        <div class="icon-box" style="background:rgba(124,58,237,0.1)">✅</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Satisfaction Confirmation</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">The task giver signs off on completion quality. "Done" is not done until the assigner confirms. No competitor has this.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(14,165,233,0.06),rgba(59,130,246,0.06))">
+        <div class="icon-box" style="background:rgba(124,58,237,0.1)">🛡️</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Designation Hierarchy</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">MD → VP → Manager → Executive. Built for how Indian organisations are actually structured, not flat western teams.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(249,115,22,0.06))">
+        <div class="icon-box" style="background:rgba(124,58,237,0.1)">📧</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Email + WhatsApp Fallback</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">WhatsApp from wallet. Wallet empty? Notifications fall back to email automatically — no disruption, no surprise charges.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(244,63,94,0.06),rgba(236,72,153,0.06))">
+        <div class="icon-box" style="background:rgba(124,58,237,0.1)">✨</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">AI Insights</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">Smart analysis of overdue rates, workload imbalance, bottlenecks, and performer rankings.</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,rgba(6,182,212,0.06),rgba(20,184,166,0.06))">
+        <div class="icon-box" style="background:rgba(124,58,237,0.1)">📊</div>
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Team Analytics</h3>
+        <p style="font-size:14px;color:#64748b;line-height:1.7">Completion rates, stacked workload charts, and performance dashboards by designation level.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="border-t bg-muted" style="padding:96px 24px">
+  <div class="wrap-sm">
+    <div class="grid-4 center">
+      <div>
+        <p style="font-size:36px;font-weight:700">5,000+</p>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">Tasks Tracked</p>
+      </div>
+      <div>
+        <p style="font-size:36px;font-weight:700">200+</p>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">Teams Active</p>
+      </div>
+      <div>
+        <p style="font-size:36px;font-weight:700">99%+</p>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">Uptime</p>
+      </div>
+      <div>
+        <p style="font-size:36px;font-weight:700">50+</p>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">Cities</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="border-t" style="padding:96px 24px">
+  <div class="wrap-md">
+    <div class="center" style="margin-bottom:64px">
+      <div class="pill" style="background:rgba(124,58,237,0.1);color:#7c3aed">👑 Pricing</div>
+      <h2 class="title" style="margin-top:16px">Simple pricing. <span class="purple">14-day free trial.</span></h2>
+      <p class="subtitle">No credit card required. All features included. Cancel anytime.</p>
+    </div>
+    <div class="grid-2" style="max-width:720px;margin:0 auto">
+      <!-- Team -->
+      <div class="plan plan-pop">
+        <div class="badge">✨ Most Popular</div>
+        <div style="padding-top:16px">
+          <h3 style="font-size:18px;font-weight:700">Team</h3>
+          <p style="font-size:14px;color:#64748b;margin-top:4px">For teams that need task accountability</p>
+          <div style="margin:24px 0">
+            <div style="display:flex;align-items:baseline;gap:4px">
+              <span style="font-size:36px;font-weight:800;letter-spacing:-0.025em">₹199</span>
+              <span style="font-size:18px;color:#64748b">/user/mo</span>
+            </div>
+            <p style="font-size:12px;color:#64748b;margin-top:4px">Billed quarterly</p>
+          </div>
+          <ul class="checks" style="margin-bottom:32px">
+            <li>Unlimited users &amp; tasks</li>
+            <li>WhatsApp + email notifications</li>
+            <li>Designation hierarchy</li>
+            <li>Satisfaction confirmation</li>
+            <li>AI insights &amp; analytics</li>
+            <li>Team workload dashboard</li>
+            <li>Role-based access control</li>
+            <li>Comments &amp; attachments</li>
+          </ul>
+          <a href="#" class="btn btn-purple" style="width:100%;justify-content:center">Start 14-Day Free Trial →</a>
+        </div>
+      </div>
+      <!-- Business -->
+      <div class="plan plan-std">
+        <h3 style="font-size:18px;font-weight:700">Business</h3>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">For organizations needing full control</p>
+        <div style="margin:24px 0">
+          <div style="display:flex;align-items:baseline;gap:4px">
+            <span style="font-size:36px;font-weight:800;letter-spacing:-0.025em">₹299</span>
+            <span style="font-size:18px;color:#64748b">/user/mo</span>
+          </div>
+          <p style="font-size:12px;color:#64748b;margin-top:4px">Billed monthly or quarterly</p>
+        </div>
+        <ul class="checks" style="margin-bottom:32px">
+          <li>Everything in Team</li>
+          <li>API access</li>
+          <li>Custom roles &amp; permissions</li>
+          <li>Advanced reporting &amp; exports</li>
+          <li>Dedicated account manager</li>
+          <li>Custom integrations</li>
+          <li>SLA guarantee</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="#" class="btn btn-outline" style="width:100%;justify-content:center">Contact Sales →</a>
+      </div>
+    </div>
+    <!-- WhatsApp Wallet -->
+    <div style="max-width:720px;margin:40px auto 0;border:1px solid #a7f3d0;border-radius:16px;background:rgba(236,253,245,0.5);padding:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="width:48px;height:48px;border-radius:12px;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">📱</div>
+      <div style="flex:1;min-width:200px">
+        <h4 style="font-size:14px;font-weight:700">WhatsApp Notifications — Pay-per-use</h4>
+        <p style="font-size:12px;color:#64748b;margin-top:4px;line-height:1.7">
+          WhatsApp alerts billed at <strong style="color:#059669">₹0.20/message</strong> from your wallet (min recharge ₹500).
+          Wallet empty? Notifications fall back to email automatically — no disruption, no surprise charges.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TARGET VERTICALS -->
+<section class="border-t bg-muted" style="padding:64px 24px;text-align:center">
+  <div class="wrap-sm">
+    <p style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#64748b;margin-bottom:24px">Built for teams in</p>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px">
+      <span class="vpill">NBFCs</span>
+      <span class="vpill">DSA Networks</span>
+      <span class="vpill">Trading Companies</span>
+      <span class="vpill">Logistics Firms</span>
+      <span class="vpill">Professional Services</span>
+      <span class="vpill">Insurance</span>
+      <span class="vpill">Real Estate</span>
+      <span class="vpill">EdTech</span>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="border-t" style="padding:80px 24px;text-align:center">
+  <div class="wrap-sm">
+    <div style="font-size:48px;color:#64748b;margin-bottom:24px">"</div>
+    <blockquote style="font-size:22px;font-weight:500;line-height:1.6">
+      I finally know what my team is doing. Every task has a trail — who assigned it, when it was done, and whether the quality was accepted.
+    </blockquote>
+    <div style="margin-top:32px">
+      <p style="font-weight:600">Operations Head</p>
+      <p style="font-size:14px;color:#64748b">NBFC with 50+ field agents across 3 states</p>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="border-t bg-muted" style="padding:96px 24px">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:64px">
+      <div class="pill" style="background:rgba(245,158,11,0.1);color:#d97706">⭐ Reviews</div>
+      <h2 class="title" style="margin-top:16px">What our users <span class="purple">say</span></h2>
+      <p style="margin-top:12px;color:#64748b;font-size:16px">⭐⭐⭐⭐⭐ 4.8 out of 5 from 127+ reviews</p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"I finally know what my team is doing. Every task has a trail — who assigned it, when it was done, and whether the quality was accepted."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar">R</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Rajesh K.</p>
+            <p style="font-size:12px;color:#64748b">Branch Manager, NBFC</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"The WhatsApp notifications changed everything. My field agents actually respond now because they see it where they already work."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar">M</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Meera S.</p>
+            <p style="font-size:12px;color:#64748b">Operations Head, DSA Network</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"We moved from Excel tracking to Work-Sync in one day. The designation hierarchy matched our org structure perfectly."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar">A</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Anil P.</p>
+            <p style="font-size:12px;color:#64748b">VP Operations, Trading Co.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"The satisfaction confirmation feature is a game-changer. Earlier, tasks were marked 'done' but the quality was never verified."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar">P</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Priya D.</p>
+            <p style="font-size:12px;color:#64748b">Team Lead, Logistics</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px">★★★★★</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"Tried Asana and ClickUp — both built for American startups. Work-Sync understands Indian team dynamics."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar">V</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Vikram M.</p>
+            <p style="font-size:12px;color:#64748b">CEO, Professional Services</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="color:#fbbf24;margin-bottom:16px">★★★★☆</div>
+        <p style="font-size:14px;line-height:1.7;color:#64748b;margin-bottom:20px">"My agents across 3 states get WhatsApp alerts the moment a task is assigned. Response time dropped from 2 days to 4 hours."</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar">S</div>
+          <div>
+            <p style="font-size:14px;font-weight:600">Sonal R.</p>
+            <p style="font-size:12px;color:#64748b">Regional Manager, Insurance</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:80px 24px">
+  <div style="max-width:896px;margin:0 auto">
+    <div style="border-radius:24px;background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:64px;text-align:center;color:#fff">
+      <h2 style="font-size:36px;font-weight:700;margin-bottom:16px">Stop losing tasks in WhatsApp groups.</h2>
+      <p style="color:rgba(255,255,255,0.8);margin-bottom:40px;max-width:448px;margin-left:auto;margin-right:auto;font-size:18px">
+        Give your team accountability that actually works. 14-day free trial, no card needed.
+      </p>
+      <a href="#" class="btn btn-white">Get Started Free →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="border-t" style="padding:32px 24px">
+  <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500">
+      <div style="width:20px;height:20px;border-radius:4px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px">⚡</div>
+      Work-Sync
+    </div>
+    <p style="font-size:14px;color:#64748b">&copy; 2026 In-Sync Solutions. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>
