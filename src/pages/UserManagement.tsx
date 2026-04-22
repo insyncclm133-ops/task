@@ -3,11 +3,28 @@ import { motion } from 'framer-motion';
 import { Plus, Edit2, UserX, X, Users, Search } from 'lucide-react';
 import type { UserRole, AppRole } from '@/types/user';
 import { APP_ROLES, getRoleBadgeColor } from '@/types/user';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 
+async function extractFunctionError(err: unknown): Promise<string> {
+  if (err instanceof FunctionsHttpError) {
+    try {
+      const body = await err.context.json();
+      if (body?.error) return String(body.error);
+    } catch {
+      try {
+        const text = await err.context.text();
+        if (text) return text;
+      } catch { /* ignore */ }
+    }
+  }
+  if (err instanceof Error) return err.message;
+  return 'An error occurred';
+}
+
 export function UserManagementPage() {
-  const { profile } = useAuth();
+  const { profile, orgId } = useAuth();
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,7 +41,6 @@ export function UserManagementPage() {
       const { data, error: fetchError } = await supabase
         .from('user_roles')
         .select('*, profiles(*)')
-        .eq('org_id', profile?.org_id)
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -93,6 +109,8 @@ export function UserManagementPage() {
       }
       const authHeaders = { Authorization: `Bearer ${refreshData.session.access_token}` };
 
+      const fullName = [formData.first_name, formData.last_name].filter(Boolean).join(' ').trim();
+
       if (editingUser) {
         // Update user
         const { error: invokeError } = await supabase.functions.invoke('manage-user', {
@@ -101,9 +119,11 @@ export function UserManagementPage() {
             action: 'update-user',
             user_id: editingUser.user_id,
             email: formData.email || undefined,
+            full_name: fullName || undefined,
             first_name: formData.first_name,
             last_name: formData.last_name,
             phone: formData.phone,
+            org_id: orgId,
             role: formData.role,
             department: formData.department || null,
           },
@@ -118,9 +138,11 @@ export function UserManagementPage() {
             action: 'create-user',
             email: formData.email,
             password: formData.password,
+            full_name: fullName || undefined,
             first_name: formData.first_name,
             last_name: formData.last_name,
             phone: formData.phone,
+            org_id: orgId,
             role: formData.role,
             department: formData.department || null,
           },
@@ -133,8 +155,7 @@ export function UserManagementPage() {
       setEditingUser(null);
       await fetchUsers();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'An error occurred';
-      setError(message);
+      setError(await extractFunctionError(err));
     } finally {
       setIsSubmitting(false);
     }
