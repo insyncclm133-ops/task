@@ -4,7 +4,6 @@ import { LayoutDashboard, ListTodo, LogOut, User, Users, Settings, Menu, X, Wall
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationBell } from '@/components/tasks/NotificationBell';
-import { HelpWidget } from '@/components/HelpWidget';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
@@ -261,9 +260,6 @@ export function Layout({ children }: LayoutProps) {
         </div>
         {children}
       </main>
-
-      {/* Floating help/support widget */}
-      <HelpWidget />
     </div>
   );
 }
