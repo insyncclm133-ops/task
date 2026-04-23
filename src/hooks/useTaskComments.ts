@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 
 export function useTaskComments(taskId: string) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, orgId } = useAuth();
 
   const { data: comments = [], isLoading } = useQuery<TaskComment[]>({
     queryKey: ['task-comments', taskId],
@@ -70,6 +70,7 @@ export function useTaskComments(taskId: string) {
           comment,
           comment_type: commentType,
           metadata: metadata ?? null,
+          org_id: orgId,
         })
         .select('*, user:profiles!task_comments_user_id_fkey(id,full_name,email,avatar_url)')
         .single();
