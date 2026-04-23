@@ -100,17 +100,11 @@ export function useTasks(filters: TaskFilters) {
 
   const createTask = useMutation({
     mutationFn: async (input: CreateTaskInput) => {
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert({
-          ...input,
-          assigned_by: user?.id,
-          org_id: orgId,
-        })
-        .select()
-        .single();
+      const payload = { ...input, assigned_by: user?.id, org_id: orgId };
+      const { data, error } = await supabase.from('tasks').insert(payload).select().single();
 
       if (error) {
+        console.error('createTask failed', { payload, error });
         throw error;
       }
 
@@ -120,8 +114,9 @@ export function useTasks(filters: TaskFilters) {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Task created successfully');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to create task: ${error.message}`);
+    onError: (error: Error & { code?: string; details?: string; hint?: string }) => {
+      const parts = [error.message, error.details, error.hint].filter(Boolean).join(' — ');
+      toast.error(`Failed to create task${error.code ? ` (${error.code})` : ''}: ${parts || 'unknown error'}`);
     },
   });
 
