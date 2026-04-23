@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 
 export function useTaskAttachments(taskId: string) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, orgId } = useAuth();
 
   const { data: attachments = [], isLoading } = useQuery<TaskAttachment[]>({
     queryKey: ['task-attachments', taskId],
@@ -58,6 +58,7 @@ export function useTaskAttachments(taskId: string) {
           file_type: file.type,
           attachment_type: type,
           uploaded_by: user!.id,
+          org_id: orgId,
         })
         .select(
           '*, uploader:profiles!task_attachments_uploaded_by_fkey(id,full_name,email,avatar_url)',

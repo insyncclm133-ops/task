@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 export function useCompleteTask() {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, orgId } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -34,6 +34,7 @@ export function useCompleteTask() {
             file_type: file.type,
             attachment_type: 'completion',
             uploaded_by: user!.id,
+            org_id: orgId,
           });
         if (attachError) throw attachError;
       }
