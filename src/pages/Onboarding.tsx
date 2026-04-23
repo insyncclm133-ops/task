@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, ArrowLeft, Loader2, Mail, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { Building2, ArrowLeft, Loader2, Mail, MessageSquare, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -14,6 +14,7 @@ export function OnboardingPage() {
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPhone, setAdminPhone] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // OTP state
   const [verificationId, setVerificationId] = useState('');
@@ -205,15 +206,26 @@ export function OnboardingPage() {
                 {/* Password */}
                 <div>
                   <label className="text-sm font-medium">Password</label>
-                  <input
-                    type="password"
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    disabled={otpSent}
-                    className="mt-1 w-full h-11 px-3 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 disabled:cursor-not-allowed"
-                    placeholder="Min. 6 characters"
-                    minLength={6}
-                  />
+                  <div className="relative mt-1">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      disabled={otpSent}
+                      className="w-full h-11 px-3 pr-10 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 disabled:cursor-not-allowed"
+                      placeholder="Min. 6 characters"
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={otpSent}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Send OTP Button */}
