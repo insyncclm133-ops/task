@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Edit2, UserX, X, Users, Search } from 'lucide-react';
+import { Plus, Edit2, UserX, X, Users, Search, Eye, EyeOff } from 'lucide-react';
 import type { UserRole, AppRole } from '@/types/user';
 import { APP_ROLES, getRoleBadgeColor } from '@/types/user';
 import { FunctionsHttpError } from '@supabase/supabase-js';
@@ -36,11 +36,17 @@ export function UserManagementPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
+    if (!orgId) {
+      setUserRoles([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const { data, error: fetchError } = await supabase
         .from('user_roles')
         .select('*, profiles(*)')
+        .eq('org_id', orgId)
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -50,7 +56,7 @@ export function UserManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [orgId]);
 
   useEffect(() => {
     fetchUsers();
@@ -335,6 +341,7 @@ function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }:
     department: '',
     role: 'sales_agent',
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user?.profiles) {
@@ -358,6 +365,7 @@ function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }:
         role: 'sales_agent',
       });
     }
+    setShowPassword(false);
   }, [user, open]);
 
   if (!open) return null;
@@ -405,15 +413,25 @@ function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }:
           {!isEditing && (
             <div>
               <label className="text-sm font-medium">Password *</label>
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={formData.password}
-                onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Minimum 6 characters"
-              />
+              <div className="relative mt-1">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  minLength={6}
+                  value={formData.password}
+                  onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
+                  className="w-full px-3 pr-10 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Minimum 6 characters"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
           )}
 
