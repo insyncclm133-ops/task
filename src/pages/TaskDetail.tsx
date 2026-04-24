@@ -5,7 +5,7 @@ import {
   ArrowLeft, Calendar, Clock, User, Tag,
   Play, CheckCircle, XCircle, Lock, RotateCcw, Edit, Trash2,
 } from 'lucide-react';
-import type { Task, CreateTaskInput, UpdateTaskInput } from '@/types/task';
+import type { Task, CreateTaskInput, UpdateTaskInput, TaskAttachment } from '@/types/task';
 import { useAuth } from '@/lib/auth-context';
 import { useTaskDetail } from '@/hooks/useTaskDetail';
 import { useTaskComments } from '@/hooks/useTaskComments';
@@ -19,6 +19,7 @@ import { getStatusColor, getStatusLabel, getPriorityColor, getPriorityLabel } fr
 import * as perms from '@/lib/taskUtils';
 import { TaskComments } from '@/components/tasks/TaskComments';
 import { TaskAttachments } from '@/components/tasks/TaskAttachments';
+import { AttachmentPreview } from '@/components/tasks/AttachmentPreview';
 import { SubtaskList } from '@/components/tasks/SubtaskList';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { SubtaskDialog } from '@/components/tasks/SubtaskDialog';
@@ -49,6 +50,7 @@ export function TaskDetailPage() {
   const [restartDialogOpen, setRestartDialogOpen] = useState(false);
   const [editingSubtask, setEditingSubtask] = useState<Task | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<TaskAttachment | null>(null);
 
   if (isLoading) {
     return <div className="text-center py-12 text-muted-foreground">Loading task...</div>;
@@ -116,9 +118,14 @@ export function TaskDetailPage() {
     }
   };
 
-  const handleDownload = async (filePath: string) => {
-    const url = await getDownloadUrl(filePath);
-    window.open(url, '_blank');
+  const handleDownload = async (filePath: string, fileName: string) => {
+    const url = await getDownloadUrl(filePath, { download: fileName });
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
@@ -322,9 +329,18 @@ export function TaskDetailPage() {
           onUpload={(file, type) => uploadAttachment.mutate({ file, type })}
           onDelete={(attachId, filePath) => deleteAttachment.mutate({ id: attachId, filePath })}
           onDownload={handleDownload}
+          onPreview={setPreviewAttachment}
           isUploading={uploadAttachment.isPending}
         />
       </div>
+
+      {previewAttachment && (
+        <AttachmentPreview
+          attachment={previewAttachment}
+          getUrl={getDownloadUrl}
+          onClose={() => setPreviewAttachment(null)}
+        />
+      )}
 
       {/* Comments */}
       <div className="rounded-lg border bg-card p-6 mb-6">

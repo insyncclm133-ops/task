@@ -112,10 +112,13 @@ export function useTaskAttachments(taskId: string) {
     },
   });
 
-  const getDownloadUrl = async (filePath: string): Promise<string> => {
+  const getDownloadUrl = async (
+    filePath: string,
+    options?: { download?: boolean | string },
+  ): Promise<string> => {
     const { data, error } = await supabase.storage
       .from('task-attachments')
-      .createSignedUrl(filePath, 3600); // 1 hour expiry
+      .createSignedUrl(filePath, 3600, options); // 1 hour expiry
 
     if (error) {
       throw error;
