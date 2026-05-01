@@ -7,6 +7,18 @@ import {
   Bell, Shield, Check, Crown, Phone, Mail, Zap, Star,
 } from 'lucide-react';
 
+/* ── GA4 Lead Tracking ───────────────────── */
+
+function trackLeadEvent(ctaLabel: string) {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', 'generate_lead', {
+      product_key: 'crm',
+      form_type: 'signup',
+      cta_label: ctaLabel,
+    });
+  }
+}
+
 /* ── Animation variants ─────────────────── */
 
 const fadeUp = {
@@ -234,6 +246,7 @@ export function LandingPage() {
             </Link>
             <Link
               to="/register"
+              onClick={() => trackLeadEvent('header_get_started')}
               className="text-sm font-medium px-4 py-2 rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors"
             >
               Get Started
@@ -303,6 +316,7 @@ export function LandingPage() {
           >
             <Link
               to="/register"
+              onClick={() => trackLeadEvent('hero_start_free')}
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:scale-105"
             >
               Start Free — No Card Needed
@@ -310,6 +324,7 @@ export function LandingPage() {
             </Link>
             <a
               href="#how-it-works"
+              onClick={() => trackLeadEvent('hero_see_how_it_works')}
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl border font-medium hover:bg-muted transition-all hover:scale-105"
             >
               See How It Works
@@ -579,6 +594,7 @@ export function LandingPage() {
 
                   <Link
                     to="/register"
+                    onClick={() => trackLeadEvent(`pricing_${plan.name.toLowerCase()}_cta`)}
                     className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold transition-all hover:scale-[1.02] ${
                       plan.highlighted
                         ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90'
@@ -724,6 +740,7 @@ export function LandingPage() {
                 </p>
                 <Link
                   to="/register"
+                  onClick={() => trackLeadEvent('cta_get_started_free')}
                   className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-purple-700 font-semibold hover:bg-white/90 transition-all hover:scale-105 shadow-lg"
                 >
                   Get Started Free

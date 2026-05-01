@@ -1,6 +1,21 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface UserStat {
+  userId: string;
+  userName: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  completed: number;
+  inProgress: number;
+  overdue: number;
+  total: number;
+  onTimePct: number;
+}
+
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 
 function getPeriodRange(period: 'weekly' | 'monthly'): { start: Date; end: Date; label: string } {

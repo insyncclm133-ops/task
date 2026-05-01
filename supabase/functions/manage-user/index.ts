@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     // Check if the caller is an admin or super_admin
     const { data: callerRole } = await adminClient
       .from('user_roles')
-      .select('role')
+      .select('role, org_id')
       .eq('user_id', caller.id)
       .eq('is_active', true)
       .single();
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'create-user': {
-        const { email, password, full_name, first_name, last_name, phone, org_id, role, designation_id, department } = body;
+        const { email, password, full_name: rawFullName, first_name, last_name, phone, org_id, role, designation_id, department } = body;
 
         if (!email || !phone) {
           return new Response(JSON.stringify({ error: 'Email and phone number are required' }), {
@@ -62,6 +62,12 @@ Deno.serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
+
+        // Derive full_name from first+last if not explicitly provided
+        const full_name = rawFullName || [first_name, last_name].filter(Boolean).join(' ') || '';
+
+        // Fall back to caller's org when not explicitly provided
+        const effectiveOrgId = org_id || callerRole.org_id;
 
         // Create user in auth.users
         const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
@@ -86,7 +92,7 @@ Deno.serve(async (req) => {
             first_name: first_name || null,
             last_name: last_name || null,
             phone: phone || null,
-            org_id: org_id || null,
+            org_id: effectiveOrgId || null,
             designation_id: designation_id || null,
             department: department || null,
             is_active: true,
@@ -98,12 +104,12 @@ Deno.serve(async (req) => {
         }
 
         // Create user role
-        if (org_id && role) {
+        if (effectiveOrgId && role) {
           const { error: roleError } = await adminClient
             .from('user_roles')
             .insert({
               user_id: newUser.user.id,
-              org_id,
+              org_id: effectiveOrgId,
               role,
               is_active: true,
             });
@@ -120,7 +126,8 @@ Deno.serve(async (req) => {
       }
 
       case 'update-user': {
-        const { user_id, email, password, full_name, first_name, last_name, phone, org_id, role, designation_id, department, is_active } = body;
+        const { user_id, email, password, full_name: rawFullNameUpdate, first_name, last_name, phone, org_id, role, designation_id, department, is_active } = body;
+        const full_name = rawFullNameUpdate || [first_name, last_name].filter(Boolean).join(' ') || undefined;
 
         // Update auth user if email or password changed
         const authUpdates: Record<string, unknown> = {};
