@@ -9,7 +9,6 @@ export function useProfiles() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('is_active', true)
         .order('full_name', { ascending: true });
 
       if (error) {

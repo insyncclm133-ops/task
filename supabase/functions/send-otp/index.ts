@@ -115,18 +115,10 @@ Deno.serve(async (req) => {
                 template: {
                   name: 'otp',
                   language: { code: 'en' },
-                  components: [
-                    {
-                      type: 'body',
-                      parameters: [{ type: 'text', text: phoneOtp }],
-                    },
-                    {
-                      type: 'button',
-                      sub_type: 'url',
-                      index: '0',
-                      parameters: [{ type: 'text', text: phoneOtp }],
-                    },
-                  ],
+                  components: [{
+                    type: 'body',
+                    parameters: [{ type: 'text', text: phoneOtp }],
+                  }],
                 },
               },
             }],
