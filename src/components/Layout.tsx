@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ListTodo, LogOut, User, Users, Settings, Menu, X, Wallet, Clock, AlertTriangle } from 'lucide-react';
+import {
+  LayoutDashboard, ListTodo, LogOut, User, Users, Settings, Menu, X, Wallet, Clock, AlertTriangle,
+  MessageCircle, Mail, MapPin, ShieldCheck, Calendar, Headphones, UserCheck, Receipt, ExternalLink,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationBell } from '@/components/tasks/NotificationBell';
@@ -10,6 +13,17 @@ import { cn } from '@/lib/utils';
 interface LayoutProps {
   children: React.ReactNode;
 }
+
+const platformLinks = [
+  { label: 'WhatsApp Broadcast', href: 'https://wa.in-sync.co.in/', icon: MessageCircle, color: 'text-emerald-400' },
+  { label: 'Email Broadcast', href: 'https://email.in-sync.co.in/', icon: Mail, color: 'text-sky-400' },
+  { label: 'Field Team Tracking', href: 'https://field.in-sync.co.in/', icon: MapPin, color: 'text-orange-400' },
+  { label: 'Vendor Verification', href: 'https://vendorverification.in-sync.co.in/', icon: ShieldCheck, color: 'text-violet-400' },
+  { label: 'Event Management', href: 'https://event.in-sync.co.in/', icon: Calendar, color: 'text-pink-400' },
+  { label: 'Global CRM', href: 'https://globalcrm.in-sync.co.in/', icon: Headphones, color: 'text-cyan-400' },
+  { label: 'Applicant Tracking', href: 'https://ats.in-sync.co.in/', icon: UserCheck, color: 'text-amber-400' },
+  { label: 'Expense Management', href: 'https://expense.in-sync.co.in/', icon: Receipt, color: 'text-rose-400' },
+];
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
@@ -145,6 +159,31 @@ export function Layout({ children }: LayoutProps) {
               </Link>
             ))}
           </>
+        )}
+
+        {!isPlatformAdmin && (
+          <div className="pt-4">
+            <div className="rounded-xl border border-sidebar-border/60 bg-sidebar-accent/30 p-2">
+              <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/70">
+                Explore Platforms
+              </p>
+              <div className="space-y-0.5">
+                {platformLinks.map((p) => (
+                  <a
+                    key={p.href}
+                    href={p.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-white transition-colors"
+                  >
+                    <p.icon className={cn('h-3.5 w-3.5 flex-shrink-0', p.color)} />
+                    <span className="flex-1 truncate">{p.label}</span>
+                    <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-40 group-hover:opacity-100" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </nav>
 
